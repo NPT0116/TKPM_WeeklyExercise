@@ -52,7 +52,7 @@ namespace BE.Services
                 {
                     StudentId = row.Cell(1).GetString(),
                     FullName = row.Cell(2).GetString(),
-                    DateOfBirth = DateTime.Parse(row.Cell(3).GetString()),
+                    DateOfBirth = DateTime.SpecifyKind(DateTime.Parse(row.Cell(3).GetString()), DateTimeKind.Utc),
                     Gender = row.Cell(4).GetString() switch
                     {
                         "Nam" => BE.Enums.Gender.Male,
