@@ -1,0 +1,25 @@
+# .NET
+BE/bin/
+BE/obj/
+BE/*.user
+BE/*.suo
+BE/*.sln.docstates
+BE/*.dbmdl
+BE/*.dbproj.schemaview
+BE/*.jfm
+BE/*.pdb
+BE/*.mdb
+BE/*.log
+BE/.vs/
+BE/.vscode/
+
+# React
+FE/node_modules/
+FE/build/
+FE/dist/
+FE/*.log
+FE/*.env
+FE/.DS_Store
+FE/npm-debug.log*
+FE/yarn-debug.log*
+FE/yarn-error.log*
