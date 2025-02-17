@@ -12,4 +12,7 @@ public interface IStudentRepository
         public Task UpdateAsync(StudentUpdateDto student);
         public Task<bool> DeleteAsync(string id);
 
+        public Task<List<StudentDto>> GetStudentsByFacultyIdAsync(int facultyId);
+        
+        public  Task<List<StudentDto>> SearchAsync(int? facultyId, string name);
 }

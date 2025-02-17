@@ -1,7 +1,8 @@
 using BE.Data;
 using BE.Interface;
 using BE.Repository;
-using BE.Service;
+using BE.Services;
+using BE.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -18,7 +19,8 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for Student Management System"
     });
-    // Adding Authentication for Swagger
+    c.OperationFilter<FileUploadOperationFilter>();
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -44,6 +46,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAllOrigins",
@@ -63,6 +66,10 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IApplicationProgramRepository, ApplicationProgramRepository>();
 builder.Services.AddScoped<IStudentStatusRepository, StudentStatusRepository>();
 builder.Services.AddScoped<IFacultyRepository, FacultyRepository>();
+// Ví dụ trong Startup.cs ConfigureServices:
+builder.Services.AddScoped<IStudentExportService, StudentExportService>();
+builder.Services.AddScoped<IStudentImportService, StudentImportService>();
+
 var app = builder.Build();
 app.UseCors("AllowAllOrigins");
 

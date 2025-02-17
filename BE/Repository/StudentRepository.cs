@@ -141,4 +141,69 @@ public class StudentRepository : IStudentRepository
             return false;
         }
 
+    public async Task<List<StudentDto>> GetStudentsByFacultyIdAsync(int facultyId)
+    {
+        var students = await _context.Students
+            .Where(s => s.FacultyId == facultyId)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
+            .Include(s => s.Status)
+            .ToListAsync();
+        return  students.Select(student => new StudentDto
+        {
+            StudentId = student.StudentId,
+            FullName = student.FullName,
+            DateOfBirth = student.DateOfBirth,
+            Gender = student.Gender,
+            Faculty = new facultyDto(student.Faculty.FacultyId, student.Faculty.Name),
+            Course = student.Course,
+            Program = new applicationProgramDto(student.Program.ProgramId, student.Program.Name),
+            Address = student.Address,
+            Email = student.Email,
+            PhoneNumber = student.PhoneNumber,
+            Status = new studentStatusDto(student.Status.StatusId, student.Status.Name)
+        }).ToList();
+    }
+
+
+public async Task<List<StudentDto>> SearchAsync(int? facultyId, string name)
+{
+    // Start with all students, including related data
+    var query = _context.Students
+        .Include(s => s.Faculty)
+        .Include(s => s.Program)
+        .Include(s => s.Status)
+        .AsQueryable();
+
+    // If a faculty is specified, filter by it
+    if (facultyId.HasValue)
+    {
+        query = query.Where(s => s.FacultyId == facultyId.Value);
+    }
+
+    // If a student name is specified, filter by it (using Contains for partial match)
+    if (!string.IsNullOrEmpty(name))
+    {
+        query = query.Where(s => s.FullName.Contains(name));
+    }
+
+    // Get the list from the database
+    var students = await query.ToListAsync();
+
+    return students.Select(student => new StudentDto
+    {
+        StudentId = student.StudentId,
+        FullName = student.FullName,
+        DateOfBirth = student.DateOfBirth,
+        Gender = student.Gender,
+        Faculty = new facultyDto(student.Faculty.FacultyId, student.Faculty.Name),
+        Course = student.Course,
+        Program = new applicationProgramDto(student.Program.ProgramId, student.Program.Name),
+        Address = student.Address,
+        Email = student.Email,
+        PhoneNumber = student.PhoneNumber,
+        Status = new studentStatusDto(student.Status.StatusId, student.Status.Name)
+    }).ToList();
+}
+
 }

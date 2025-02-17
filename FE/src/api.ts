@@ -1,10 +1,9 @@
-// api.ts
+// src/api.ts
 import {
-  Faculty,
   Student,
+  Faculty,
   StudentStatus,
   StudentRequest,
-  ApiError,
   program,
 } from "./interface";
 
@@ -20,112 +19,189 @@ export interface ApiResponse<T> {
 const parseApiResponse = async <T>(
   response: Response
 ): Promise<ApiResponse<T>> => {
-  const responseData = await response.json();
-
-  if (!response.ok) {
-    return {
-      data: null,
-      succeeded: false,
-      errors: responseData.errors || [],
-      message: responseData.message || "An error occurred",
-    };
-  }
-
-  return {
-    data: responseData.data,
-    succeeded: true,
-    errors: [],
-    message: "",
-  };
-};
-
-const handleApiError = async (response: Response): Promise<never> => {
-  const errorText = await response.text();
-  console.error("API Error Response:", errorText);
-  console.error("Response status:", response.status);
-
   try {
-    const errorData: ApiError = JSON.parse(errorText);
-    const errorMessage = errorData.title;
-
-    if (errorData.errors) {
-      const fieldErrors = Object.entries(errorData.errors).reduce(
-        (acc, [field, messages]) => {
-          acc[field] = messages.join(", ");
-          return acc;
-        },
-        {} as Record<string, string>
-      );
-      throw { message: errorMessage, fieldErrors };
+    const text = await response.text();
+    if (!text) {
+      // 204 No Content case
+      return { data: null, succeeded: true, errors: [], message: "No Content" };
     }
-
-    throw new Error(errorMessage);
+    const responseData = JSON.parse(text);
+    if (!response.ok) {
+      return {
+        data: null,
+        succeeded: false,
+        errors: responseData.errors || [],
+        message: responseData.message || "An error occurred",
+      };
+    }
+    return {
+      data: responseData.data,
+      succeeded: true,
+      errors: [],
+      message: "",
+    };
   } catch (e) {
-    throw new Error(errorText || "An error occurred");
+    throw new Error("Failed to parse response: " + e);
   }
 };
 
 export const api = {
-  async getFaculties(): Promise<ApiResponse<Faculty[]>> {
-    const response = await fetch(`${API_BASE_URL}/Faculty`);
-    return parseApiResponse<Faculty[]>(response);
-  },
-
-  async getPrograms(): Promise<ApiResponse<program[]>> {
-    const response = await fetch(`${API_BASE_URL}/ApplicationProgram`);
-    return parseApiResponse<program[]>(response);
-  },
-
-  async getStudentStatuses(): Promise<ApiResponse<StudentStatus[]>> {
-    const response = await fetch(`${API_BASE_URL}/StudentStatus`);
-    return parseApiResponse<StudentStatus[]>(response);
-  },
-
-  async getStudents(): Promise<ApiResponse<Student[]>> {
-    const response = await fetch(`${API_BASE_URL}/Students`);
+  // --- Student Endpoints ---
+  getStudents: async (): Promise<ApiResponse<Student[]>> => {
+    const response = await fetch(`${API_BASE_URL}/students`);
     return parseApiResponse<Student[]>(response);
   },
-
-  async addStudent(student: StudentRequest): Promise<ApiResponse<Student>> {
-    const url = `${API_BASE_URL}/Students`;
-    const response = await fetch(url, {
+  getStudentById: async (id: string): Promise<ApiResponse<Student>> => {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`);
+    return parseApiResponse<Student>(response);
+  },
+  addStudent: async (
+    student: StudentRequest
+  ): Promise<ApiResponse<Student>> => {
+    const response = await fetch(`${API_BASE_URL}/students`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(student),
     });
     return parseApiResponse<Student>(response);
   },
-
-  async updateStudent(student: StudentRequest): Promise<ApiResponse<Student>> {
-    const url = `${API_BASE_URL}/Students/${student.studentId}`;
-    const response = await fetch(url, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(student),
+  updateStudent: async (
+    student: StudentRequest
+  ): Promise<ApiResponse<Student>> => {
+    const response = await fetch(
+      `${API_BASE_URL}/students/${student.studentId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(student),
+      }
+    );
+    return parseApiResponse<Student>(response);
+  },
+  deleteStudent: async (id: string): Promise<ApiResponse<string>> => {
+    const response = await fetch(`${API_BASE_URL}/students/${id}`, {
+      method: "DELETE",
     });
-
-    if (response.status === 204) {
-      // If no content is returned, create a success response manually.
-      return {
-        data: student as unknown as Student, // Optionally, you can choose to return the updated student data
-        succeeded: true,
-        errors: [],
-        message: "Student updated successfully.",
-      };
-    }
-
-    return parseApiResponse<Student>(response);
+    return parseApiResponse<string>(response);
   },
 
-  async deleteStudent(mssv: string): Promise<ApiResponse<void>> {
-    const url = `${API_BASE_URL}/Students/${mssv}`;
-    const response = await fetch(url, { method: "DELETE" });
-    return parseApiResponse<void>(response);
+  // --- New Search Endpoints ---
+
+  // Search by faculty and/or student name (both query parameters are optional)
+  searchStudents: async (
+    facultyId: number | null,
+    name: string
+  ): Promise<ApiResponse<Student[]>> => {
+    const queryParams = new URLSearchParams();
+    if (facultyId !== null)
+      queryParams.append("facultyId", facultyId.toString());
+    if (name.trim() !== "") queryParams.append("name", name);
+    const response = await fetch(
+      `${API_BASE_URL}/students/search?${queryParams.toString()}`
+    );
+    return parseApiResponse<Student[]>(response);
   },
 
-  async getStudentById(studentId: string): Promise<ApiResponse<Student>> {
-    const url = `${API_BASE_URL}/Students/${studentId}`;
-    const response = await fetch(url);
-    return parseApiResponse<Student>(response);
+  // Get students by faculty id only
+  getStudentsByFacultyId: async (
+    facultyId: number
+  ): Promise<ApiResponse<Student[]>> => {
+    const response = await fetch(
+      `${API_BASE_URL}/students/faculty/${facultyId}`
+    );
+    return parseApiResponse<Student[]>(response);
+  },
+
+  // --- Faculty, StudentStatus, Program endpoints remain unchanged ---
+  getFaculties: async (): Promise<ApiResponse<Faculty[]>> => {
+    const response = await fetch(`${API_BASE_URL}/Faculty`);
+    return parseApiResponse<Faculty[]>(response);
+  },
+  addFaculty: async (faculty: Faculty): Promise<ApiResponse<Faculty>> => {
+    const response = await fetch(`${API_BASE_URL}/Faculty`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(faculty),
+    });
+    return parseApiResponse<Faculty>(response);
+  },
+  updateFaculty: async (faculty: Faculty): Promise<ApiResponse<Faculty>> => {
+    const response = await fetch(
+      `${API_BASE_URL}/Faculty/${faculty.facultyId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(faculty),
+      }
+    );
+    return parseApiResponse<Faculty>(response);
+  },
+  deleteFaculty: async (id: number): Promise<ApiResponse<string>> => {
+    const response = await fetch(`${API_BASE_URL}/Faculty/${id}`, {
+      method: "DELETE",
+    });
+    return parseApiResponse<string>(response);
+  },
+  getStudentStatuses: async (): Promise<ApiResponse<StudentStatus[]>> => {
+    const response = await fetch(`${API_BASE_URL}/StudentStatus`);
+    return parseApiResponse<StudentStatus[]>(response);
+  },
+  addStudentStatus: async (
+    status: StudentStatus
+  ): Promise<ApiResponse<StudentStatus>> => {
+    const response = await fetch(`${API_BASE_URL}/StudentStatus`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(status),
+    });
+    return parseApiResponse<StudentStatus>(response);
+  },
+  updateStudentStatus: async (
+    status: StudentStatus
+  ): Promise<ApiResponse<StudentStatus>> => {
+    const response = await fetch(
+      `${API_BASE_URL}/StudentStatus/${status.statusId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(status),
+      }
+    );
+    return parseApiResponse<StudentStatus>(response);
+  },
+  deleteStudentStatus: async (id: number): Promise<ApiResponse<string>> => {
+    const response = await fetch(`${API_BASE_URL}/StudentStatus/${id}`, {
+      method: "DELETE",
+    });
+    return parseApiResponse<string>(response);
+  },
+  getPrograms: async (): Promise<ApiResponse<program[]>> => {
+    const response = await fetch(`${API_BASE_URL}/ApplicationProgram`);
+    return parseApiResponse<program[]>(response);
+  },
+  addProgram: async (prog: program): Promise<ApiResponse<program>> => {
+    const response = await fetch(`${API_BASE_URL}/ApplicationProgram`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(prog),
+    });
+    return parseApiResponse<program>(response);
+  },
+  updateProgram: async (prog: program): Promise<ApiResponse<program>> => {
+    const response = await fetch(
+      `${API_BASE_URL}/ApplicationProgram/${prog.programId}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prog),
+      }
+    );
+    return parseApiResponse<program>(response);
+  },
+  deleteProgram: async (id: number): Promise<ApiResponse<string>> => {
+    const response = await fetch(`${API_BASE_URL}/ApplicationProgram/${id}`, {
+      method: "DELETE",
+    });
+    return parseApiResponse<string>(response);
   },
 };

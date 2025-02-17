@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace BE.Service;
+namespace BE.Services;
 
 public class ApplyMigrationService : IHostedService
 {

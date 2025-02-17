@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using BE.Dto;
 using BE.Interface;
 using BE.Models;
+using BE.Services;
 using BE.Utils; // Ensure you include the namespace for Response
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,10 +14,13 @@ namespace BE.Controller
     public class StudentController : ControllerBase
     {
         private readonly IStudentRepository _studentRepo;
-
-        public StudentController(IStudentRepository studentRepo)
+        private readonly IStudentExportService _exportService;
+        private readonly IStudentImportService _importService;
+        public StudentController(IStudentRepository studentRepo, IStudentExportService exportService, IStudentImportService importService)
         {
             _studentRepo = studentRepo;
+            _exportService = exportService;
+            _importService = importService;
         }
 
         [HttpGet]
@@ -96,6 +100,52 @@ namespace BE.Controller
             }
             await _studentRepo.DeleteAsync(id);
         return Ok(new Response<string>(null, "Student deleted successfully.", true));
+        }
+
+        // In BE/Controller/StudentController.cs
+        [HttpGet("search")]
+        public async Task<ActionResult<Response<List<StudentDto>>>> SearchStudents(
+            [FromQuery] int? facultyId, 
+            [FromQuery] string name)
+        {
+            var students = await _studentRepo.SearchAsync(facultyId, name);
+            return Ok(new Response<List<StudentDto>>(students));
+        }
+
+        [HttpGet("faculty/{facultyId}")]
+        public async Task<ActionResult<Response<List<StudentDto>>>> GetStudentsByFacultyId(int facultyId)
+        {
+            var students = await _studentRepo.GetStudentsByFacultyIdAsync(facultyId);
+            return Ok(new Response<List<StudentDto>>(students));
+        }
+
+          [HttpGet("export/excel")]
+        public async Task<IActionResult> ExportStudentsToExcel()
+        {
+            var content = await _exportService.ExportStudentsToExcelAsync();
+            return File(content,
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "students.xlsx");
+        }
+
+        [HttpGet("export/json")]
+        public async Task<IActionResult> ExportStudentsToJson()
+        {
+            var content = await _exportService.ExportStudentsToJsonAsync();
+            return File(content, "application/json", "students.json");
+        }
+
+        [HttpPost("import/excel")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> ImportStudentsFromExcel([FromForm] FileUploadDto fileUpload)
+        {
+            if (fileUpload == null || fileUpload.File == null || fileUpload.File.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            await _importService.ImportStudentsFromExcelAsync(fileUpload.File);
+            return Ok(new Response<string>(null, "Import successful", true));
         }
     }
 }
