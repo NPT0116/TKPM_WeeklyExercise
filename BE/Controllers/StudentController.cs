@@ -1,13 +1,14 @@
-using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using BE.Dto;
 using BE.Interface;
 using BE.Models;
+using BE.Utils; // Ensure you include the namespace for Response
 using Microsoft.AspNetCore.Mvc;
 
-namespace BE.Controller;
-
-
-  [Route("api/students")]
+namespace BE.Controller
+{
+    [Route("api/students")]
     [ApiController]
     public class StudentController : ControllerBase
     {
@@ -19,47 +20,82 @@ namespace BE.Controller;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<StudentDto>>> GetAllStudents()
+        public async Task<ActionResult<Response<List<StudentDto>>>> GetAllStudents()
         {
-            return await _studentRepo.GetAllAsync();
+            var students = await _studentRepo.GetAllAsync();
+            return Ok(new Response<List<StudentDto>>(students));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<StudentDto>> GetStudent(string id)
+        public async Task<ActionResult<Response<StudentDto>>> GetStudent(string id)
         {
             var student = await _studentRepo.GetByIdAsync(id);
-            if (student == null) return NotFound();
-            return student;
+            if (student == null)
+            {
+                return NotFound(new Response<StudentDto>
+                {
+                    Succeeded = false,
+                    Message = "Student not found.",
+                    Errors = new[] { "Student not found." }
+                });
+            }
+            return Ok(new Response<StudentDto>(student));
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddStudent(StudentCreateDto student)
+        public async Task<ActionResult<Response<StudentCreateDto>>> AddStudent(StudentCreateDto student)
         {
             var existingStudent = await _studentRepo.GetByIdAsync(student.StudentId);
             if (existingStudent != null)
             {
-                return BadRequest("Student with this ID already exists");
+                return BadRequest(new Response<StudentCreateDto>
+                {
+                    Succeeded = false,
+                    Message = "Student with this ID already exists.",
+                    Errors = new[] { "Student with this ID already exists." }
+                });
             }
             await _studentRepo.CreateAsync(student);
-            return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, student);
+            return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, new Response<StudentCreateDto>(student));
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateStudent(string id, StudentUpdateDto student)
+        public async Task<ActionResult<Response<StudentUpdateDto>>> UpdateStudent(string id, [FromBody] StudentUpdateDto student)
         {
-            if (id != student.StudentId) return BadRequest();
+            if (id != student.StudentId)
+            {
+                return BadRequest(new Response<StudentUpdateDto>
+                {
+                    Succeeded = false,
+                    Message = "Student ID mismatch.",
+                    Errors = new[] { "Student ID mismatch." }
+                });
+            }
             var existingStudent = await _studentRepo.GetByIdAsync(id);
-            if (existingStudent == null) return NotFound();
+            if (existingStudent == null)
+            {
+                return BadRequest(new Response<StudentUpdateDto>
+                {
+                    Succeeded = false,
+                    Message = "Student ID mismatch.",
+                    Errors = new[] { "Student ID mismatch." }
+                });            }
             await _studentRepo.UpdateAsync(student);
-            return NoContent();
+        return Ok(new Response<StudentUpdateDto>(null, "Student updated successfully.", true));
+
+
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteStudent(string id)
+        public async Task<ActionResult<Response<string>>> DeleteStudent(string id)
         {
+            var existingStudent = await _studentRepo.GetByIdAsync(id);
+            if (existingStudent == null)
+            {
+                return NotFound(new Response<string>("Student not found."));
+            }
             await _studentRepo.DeleteAsync(id);
-            return NoContent();
+        return Ok(new Response<string>(null, "Student deleted successfully.", true));
         }
-
-
     }
+}

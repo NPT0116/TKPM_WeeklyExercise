@@ -1,3 +1,4 @@
+// StudentForm.tsx
 import React, { useState, useEffect } from "react";
 import {
   Student,
@@ -6,15 +7,16 @@ import {
   StudentRequest,
   program,
 } from "../interface";
+import { ApiResponse } from "../api"; // Adjust the import path as needed
 
 interface StudentFormProps {
   student: Student | null;
   faculties: Faculty[];
   statuses: StudentStatus[];
-  error: string | null;
-  onSubmit: (student: StudentRequest) => void;
+  error: React.ReactNode | null;
+  onSubmit: (student: StudentRequest) => Promise<ApiResponse<Student>>;
   onClose: () => void;
-  programs: program[]; // Assuming the type for programs
+  programs: program[];
 }
 
 const sampleStudent: StudentRequest = {
@@ -54,10 +56,13 @@ const StudentForm: React.FC<StudentFormProps> = ({
     statusId: statuses[0]?.statusId || 1,
   });
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (student) {
       setFormData({
         ...student,
+        // When editing, use related properties (if available) or defaults
         statusId: student.status?.statusId || statuses[0]?.statusId || 1,
         programId: student.program?.id || programs[0]?.programId || 1,
         facultyId: student.faculty?.id || faculties[0]?.facultyId || 1,
@@ -73,33 +78,43 @@ const StudentForm: React.FC<StudentFormProps> = ({
     }
   }, [student, faculties, statuses, programs]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const dateOfBirth = new Date(formData.dateOfBirth);
-      if (isNaN(dateOfBirth.getTime())) {
+      const date = new Date(formData.dateOfBirth);
+      if (isNaN(date.getTime())) {
         throw new Error("Invalid date format");
       }
 
       const submissionData: StudentRequest = {
         ...formData,
-        dateOfBirth: dateOfBirth.toISOString(),
+        dateOfBirth: date.toISOString(),
       };
 
       console.log(
         "Form submitted with data:",
         JSON.stringify(submissionData, null, 2)
       );
-      onSubmit(submissionData);
+
+      const response = await onSubmit(submissionData);
+      if (!response.succeeded) {
+        const newFieldErrors: Record<string, string> = {};
+        if (
+          response.errors &&
+          response.errors.includes("Student with this ID already exists.")
+        ) {
+          newFieldErrors.studentId = "Student ID already exists.";
+        }
+        setFieldErrors(newFieldErrors);
+      } else {
+        setFieldErrors({});
+      }
     } catch (error) {
       console.error("Form submission error:", error);
-      throw error;
+      setFieldErrors({});
     }
   };
 
-  console.log("Available statuses:", statuses);
-  console.log("Current form data:", formData);
-  console.log("Available programs:", programs);
   return (
     <div className="student-form">
       <h2>{student ? "Sửa Sinh Viên" : "Thêm Sinh Viên Mới"}</h2>
@@ -112,6 +127,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         Điền mẫu thử
       </button>
       <form onSubmit={handleSubmit}>
+        {/* MSSV */}
         <div className="form-group">
           <label>MSSV:</label>
           <input
@@ -122,8 +138,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           />
+          {fieldErrors.studentId && (
+            <div className="error-message">{fieldErrors.studentId}</div>
+          )}
         </div>
 
+        {/* Full name */}
         <div className="form-group">
           <label>Họ và tên:</label>
           <input
@@ -134,8 +154,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           />
+          {fieldErrors.fullName && (
+            <div className="error-message">{fieldErrors.fullName}</div>
+          )}
         </div>
 
+        {/* Date of Birth */}
         <div className="form-group">
           <label>Ngày sinh:</label>
           <input
@@ -146,8 +170,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           />
+          {fieldErrors.dateOfBirth && (
+            <div className="error-message">{fieldErrors.dateOfBirth}</div>
+          )}
         </div>
 
+        {/* Gender */}
         <div className="form-group">
           <label>Giới tính:</label>
           <select
@@ -162,6 +190,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
           </select>
         </div>
 
+        {/* Faculty */}
         <div className="form-group">
           <label>Khoa:</label>
           <select
@@ -171,7 +200,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           >
-            {faculties && faculties.length > 0 ? (
+            {faculties.length > 0 ? (
               faculties.map((faculty) => (
                 <option key={faculty.facultyId} value={faculty.facultyId}>
                   {faculty.name}
@@ -181,8 +210,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <option value="">Loading faculties...</option>
             )}
           </select>
+          {fieldErrors.facultyId && (
+            <div className="error-message">{fieldErrors.facultyId}</div>
+          )}
         </div>
 
+        {/* Course */}
         <div className="form-group">
           <label>Khóa:</label>
           <input
@@ -193,8 +226,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           />
+          {fieldErrors.course && (
+            <div className="error-message">{fieldErrors.course}</div>
+          )}
         </div>
 
+        {/* Program */}
         <div className="form-group">
           <label>Chương trình:</label>
           <select
@@ -204,18 +241,22 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           >
-            {programs && programs.length > 0 ? (
-              programs.map((program) => (
-                <option key={program.programId} value={program.programId}>
-                  {program.name}
+            {programs.length > 0 ? (
+              programs.map((prog) => (
+                <option key={prog.programId} value={prog.programId}>
+                  {prog.name}
                 </option>
               ))
             ) : (
               <option value="">Loading programs...</option>
             )}
           </select>
+          {fieldErrors.programId && (
+            <div className="error-message">{fieldErrors.programId}</div>
+          )}
         </div>
 
+        {/* Address */}
         <div className="form-group">
           <label>Địa chỉ:</label>
           <input
@@ -226,8 +267,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           />
+          {fieldErrors.address && (
+            <div className="error-message">{fieldErrors.address}</div>
+          )}
         </div>
 
+        {/* Email */}
         <div className="form-group">
           <label>Email:</label>
           <input
@@ -238,8 +283,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           />
+          {fieldErrors.email && (
+            <div className="error-message">{fieldErrors.email}</div>
+          )}
         </div>
 
+        {/* Phone Number */}
         <div className="form-group">
           <label>Số điện thoại:</label>
           <input
@@ -250,18 +299,22 @@ const StudentForm: React.FC<StudentFormProps> = ({
             }
             required
           />
+          {fieldErrors.phoneNumber && (
+            <div className="error-message">{fieldErrors.phoneNumber}</div>
+          )}
         </div>
 
+        {/* Status */}
         <div className="form-group">
           <label>Tình trạng:</label>
           <select
-            value={String(formData.statusId)}
+            value={formData.statusId}
             onChange={(e) =>
               setFormData({ ...formData, statusId: Number(e.target.value) })
             }
             required
           >
-            {statuses && statuses.length > 0 ? (
+            {statuses.length > 0 ? (
               statuses.map((status) => (
                 <option key={status.statusId} value={status.statusId}>
                   {status.name}
@@ -271,8 +324,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
               <option value="">Loading statuses...</option>
             )}
           </select>
+          {fieldErrors.statusId && (
+            <div className="error-message">{fieldErrors.statusId}</div>
+          )}
         </div>
 
+        {/* Form Actions */}
         <div className="form-actions">
           <button type="submit">{student ? "Cập Nhật" : "Thêm"}</button>
           <button type="button" onClick={onClose}>

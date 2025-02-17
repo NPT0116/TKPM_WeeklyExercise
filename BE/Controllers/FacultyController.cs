@@ -1,6 +1,7 @@
 using BE.Interface;
 using BE.Models;
 using BE.Repository;
+using BE.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BE.Controllers
@@ -17,33 +18,33 @@ namespace BE.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Faculty>>> GetAll()
+        public async Task<ActionResult<Response<IEnumerable<Faculty>>>> GetAll()
         {
             var faculties = await _repository.GetAllAsync();
-            return Ok(faculties);
+            return Ok(new Response<IEnumerable<Faculty>>(faculties));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Faculty>> GetById(int id)
+        public async Task<ActionResult<Response<Faculty>>> GetById(int id)
         {
             var faculty = await _repository.GetByIdAsync(id);
             if (faculty == null)
-                return NotFound();
-            return Ok(faculty);
+                return NotFound(new Response<Faculty>(null, "Faculty not found", false));
+            return Ok(new Response<Faculty>(faculty));
         }
 
         [HttpPost]
-        public async Task<ActionResult<Faculty>> Create(Faculty faculty)
+        public async Task<ActionResult<Response<Faculty>>> Create(Faculty faculty)
         {
             var created = await _repository.CreateAsync(faculty);
-            return CreatedAtAction(nameof(GetById), new { id = created.FacultyId }, created);
+            return CreatedAtAction(nameof(GetById), new { id = created.FacultyId }, new Response<Faculty>(created));
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Faculty faculty)
         {
             if (id != faculty.FacultyId)
-                return BadRequest();
+                return BadRequest(new Response<Faculty>(null, "Invalid ID", false));
 
             await _repository.UpdateAsync(faculty);
             return NoContent();

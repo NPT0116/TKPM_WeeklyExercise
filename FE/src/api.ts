@@ -1,3 +1,4 @@
+// api.ts
 import {
   Faculty,
   Student,
@@ -9,6 +10,35 @@ import {
 
 const API_BASE_URL = "http://localhost:5230/api";
 
+export interface ApiResponse<T> {
+  data: T | null;
+  succeeded: boolean;
+  errors?: string[];
+  message?: string;
+}
+
+const parseApiResponse = async <T>(
+  response: Response
+): Promise<ApiResponse<T>> => {
+  const responseData = await response.json();
+
+  if (!response.ok) {
+    return {
+      data: null,
+      succeeded: false,
+      errors: responseData.errors || [],
+      message: responseData.message || "An error occurred",
+    };
+  }
+
+  return {
+    data: responseData.data,
+    succeeded: true,
+    errors: [],
+    message: "",
+  };
+};
+
 const handleApiError = async (response: Response): Promise<never> => {
   const errorText = await response.text();
   console.error("API Error Response:", errorText);
@@ -16,151 +46,86 @@ const handleApiError = async (response: Response): Promise<never> => {
 
   try {
     const errorData: ApiError = JSON.parse(errorText);
-    let errorMessage = errorData.title;
+    const errorMessage = errorData.title;
 
     if (errorData.errors) {
-      const errorMessages = Object.values(errorData.errors).flat().join("\n");
-      errorMessage = errorMessages;
+      const fieldErrors = Object.entries(errorData.errors).reduce(
+        (acc, [field, messages]) => {
+          acc[field] = messages.join(", ");
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+      throw { message: errorMessage, fieldErrors };
     }
 
     throw new Error(errorMessage);
   } catch (e) {
-    // If error response is not JSON
     throw new Error(errorText || "An error occurred");
   }
 };
 
 export const api = {
-  async getFaculties(): Promise<Faculty[]> {
+  async getFaculties(): Promise<ApiResponse<Faculty[]>> {
     const response = await fetch(`${API_BASE_URL}/Faculty`);
-    if (!response.ok) throw new Error("Failed to fetch faculties");
-    return response.json();
+    return parseApiResponse<Faculty[]>(response);
   },
 
-  async getPrograms(): Promise<program[]> {
+  async getPrograms(): Promise<ApiResponse<program[]>> {
     const response = await fetch(`${API_BASE_URL}/ApplicationProgram`);
-    if (!response.ok) throw new Error("Failed to fetch programs");
-    return response.json();
+    return parseApiResponse<program[]>(response);
   },
 
-  async getStudentStatuses(): Promise<StudentStatus[]> {
+  async getStudentStatuses(): Promise<ApiResponse<StudentStatus[]>> {
     const response = await fetch(`${API_BASE_URL}/StudentStatus`);
-    if (!response.ok) throw new Error("Failed to fetch student statuses");
-    return response.json();
+    return parseApiResponse<StudentStatus[]>(response);
   },
 
-  async getStudents(): Promise<Student[]> {
+  async getStudents(): Promise<ApiResponse<Student[]>> {
     const response = await fetch(`${API_BASE_URL}/Students`);
-    if (!response.ok) throw new Error("Failed to fetch students");
-    return response.json();
+    return parseApiResponse<Student[]>(response);
   },
 
-  async addStudent(student: StudentRequest): Promise<Student> {
+  async addStudent(student: StudentRequest): Promise<ApiResponse<Student>> {
     const url = `${API_BASE_URL}/Students`;
-    console.log("API URL:", url);
-    console.log(
-      "Sending student data to API:",
-      JSON.stringify(student, null, 2)
-    );
-
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(student),
     });
-
-    if (!response.ok) {
-      console.error("Failed to add student:", response.status);
-      await handleApiError(response);
-    }
-
-    const result = await response.json();
-    console.log("API Response:", JSON.stringify(result, null, 2));
-    return result;
+    return parseApiResponse<Student>(response);
   },
 
-  async updateStudent(student: StudentRequest): Promise<Student> {
+  async updateStudent(student: StudentRequest): Promise<ApiResponse<Student>> {
     const url = `${API_BASE_URL}/Students/${student.studentId}`;
-    console.log("API URL:", url);
-    console.log(
-      "Sending update data to API:",
-      JSON.stringify(student, null, 2)
-    );
-
     const response = await fetch(url, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(student),
     });
 
-    if (!response.ok) {
-      await handleApiError(response);
-    }
-
-    // If status is 204 (No Content), return the submitted data with status info
     if (response.status === 204) {
-      console.log("Success with no content, using submitted data");
-      // Get the status info from the existing statuses
-      const status = await this.getStudentStatuses().then((statuses) =>
-        statuses.find((s) => s.statusId === student.statusId)
-      );
-      const program = await this.getPrograms().then((programs) =>
-        programs.find((p) => p.programId === student.programId)
-      );
-      const faculty = await this.getFaculties().then((faculties) =>
-        faculties.find((f) => f.facultyId === student.facultyId)
-      );
-
+      // If no content is returned, create a success response manually.
       return {
-        ...student,
-        faculty: { id: student.facultyId, name: faculty?.name || "" },
-        program: { id: student.programId, name: program?.name || "" },
-        status: {
-          statusId: student.statusId,
-          name: status?.name || "",
-        },
+        data: student as unknown as Student, // Optionally, you can choose to return the updated student data
+        succeeded: true,
+        errors: [],
+        message: "Student updated successfully.",
       };
     }
 
-    const result = await response.json();
-    console.log("API Response:", JSON.stringify(result, null, 2));
-    return result;
+    return parseApiResponse<Student>(response);
   },
 
-  async deleteStudent(mssv: string): Promise<void> {
+  async deleteStudent(mssv: string): Promise<ApiResponse<void>> {
     const url = `${API_BASE_URL}/Students/${mssv}`;
-    console.log("API URL:", url);
-
-    const response = await fetch(url, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error Response:", errorText);
-      console.error("Response status:", response.status);
-      throw new Error(`Failed to delete student: ${errorText}`);
-    }
+    const response = await fetch(url, { method: "DELETE" });
+    return parseApiResponse<void>(response);
   },
 
-  getStudentById: async (studentId: string): Promise<Student> => {
+  async getStudentById(studentId: string): Promise<ApiResponse<Student>> {
     const url = `${API_BASE_URL}/Students/${studentId}`;
-    console.log("API URL:", url);
-
     const response = await fetch(url);
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("API Error Response:", errorText);
-      console.error("Response status:", response.status);
-      throw new Error("Student not found");
-    }
-
-    const result = await response.json();
-    console.log("API Response:", JSON.stringify(result, null, 2));
-    return result;
+    return parseApiResponse<Student>(response);
   },
 };

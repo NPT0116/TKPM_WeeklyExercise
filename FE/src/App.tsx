@@ -1,3 +1,4 @@
+// App.tsx
 import React, { useState, useEffect } from "react";
 import {
   Student,
@@ -6,7 +7,7 @@ import {
   StudentRequest,
   program,
 } from "./interface";
-import { api } from "./api";
+import { api, ApiResponse } from "./api";
 import StudentListScreen from "./screens/StudentListScreen";
 import StudentForm from "./components/StudentForm";
 import "./App.css";
@@ -18,7 +19,7 @@ function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [currentScreen, setCurrentScreen] = useState<"list" | "form">("list");
   const [programs, setPrograms] = useState<program[]>([]);
@@ -35,15 +36,11 @@ function App() {
             api.getPrograms(),
           ]);
 
-        console.log("Loaded faculties:", facultiesData);
-        console.log("Loaded statuses:", statusesData);
-        console.log("Loaded programs:", programsData);
-
-        setFaculties(facultiesData);
-        setStatuses(statusesData);
-        setStudents(studentsData);
-        setFilteredStudents(studentsData);
-        setPrograms(programsData);
+        setFaculties(facultiesData.data || []);
+        setStatuses(statusesData.data || []);
+        setStudents(studentsData.data || []);
+        setFilteredStudents(studentsData.data || []);
+        setPrograms(programsData.data || []);
       } catch (err) {
         console.error("Error loading data:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -55,29 +52,26 @@ function App() {
     loadInitialData();
   }, []);
 
-  const handleAddStudent = async (student: StudentRequest) => {
+  const handleAddStudent = async (
+    student: StudentRequest
+  ): Promise<ApiResponse<Student>> => {
     try {
-      await api.addStudent(student);
-      console.log("Student added successfully.");
-
-      // Reload the students from the API
-      const studentsData = await api.getStudents();
-      setStudents(studentsData);
-      setFilteredStudents(studentsData);
-      setIsFormOpen(false);
-      setCurrentScreen("list");
-      return true;
+      const response = await api.addStudent(student);
+      if (response.succeeded) {
+        const studentsData = await api.getStudents();
+        setStudents(studentsData.data || []);
+        setFilteredStudents(studentsData.data || []);
+        setIsFormOpen(false);
+        setCurrentScreen("list");
+      }
+      return response;
     } catch (err) {
       console.error("Error adding student:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Failed to add student";
       setError(errorMessage);
-      const formattedError = errorMessage
-        .split("\n")
-        .map((line, i) => <div key={i}>{line}</div>);
-      setError(formattedError);
       setTimeout(() => setError(null), 5000);
-      return false;
+      throw err;
     }
   };
 
@@ -93,19 +87,24 @@ function App() {
     }
   };
 
-  const handleUpdateStudent = async (updatedStudent: StudentRequest) => {
+  const handleUpdateStudent = async (
+    updatedStudent: StudentRequest
+  ): Promise<ApiResponse<Student>> => {
     try {
-      const result = await api.updateStudent(updatedStudent);
-      // Update both arrays with the complete student data
-      const updateStudentInList = (student: Student) =>
-        student.studentId === result.studentId ? result : student;
-
-      setStudents(students.map(updateStudentInList));
-      setFilteredStudents(filteredStudents.map(updateStudentInList));
-      setSelectedStudent(null);
-      setIsFormOpen(false);
+      const response = await api.updateStudent(updatedStudent);
+      if (response.succeeded) {
+        // Refresh the student list if needed
+        const studentsData = await api.getStudents();
+        setStudents(studentsData.data || []);
+        setFilteredStudents(studentsData.data || []);
+        setSelectedStudent(null);
+        setIsFormOpen(false);
+        setCurrentScreen("list"); // Redirect to home (list screen)
+      }
+      return response;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update student");
+      throw err;
     }
   };
 
@@ -115,8 +114,8 @@ function App() {
         setFilteredStudents(students);
         return;
       }
-      const student = await api.getStudentById(studentId);
-      setFilteredStudents(student ? [student] : []);
+      const studentResponse = await api.getStudentById(studentId);
+      setFilteredStudents(studentResponse.data ? [studentResponse.data] : []);
     } catch (err) {
       console.error("Error searching student:", err);
       setFilteredStudents([]);
@@ -155,13 +154,9 @@ function App() {
           error={error}
           onSubmit={async (student) => {
             if (selectedStudent) {
-              await handleUpdateStudent(student);
-              setCurrentScreen("list");
+              return await handleUpdateStudent(student);
             } else {
-              const success = await handleAddStudent(student);
-              if (success) {
-                setCurrentScreen("list");
-              }
+              return await handleAddStudent(student);
             }
           }}
           onClose={() => {
