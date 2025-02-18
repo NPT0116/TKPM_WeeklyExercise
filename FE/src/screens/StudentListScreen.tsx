@@ -16,7 +16,7 @@ const StudentListScreen: React.FC<StudentListScreenProps> = ({
   onAddNew,
   onDelete,
   onEdit,
-  onSearch,
+  // onSearch,
 }) => {
   return (
     <div className="screen student-list-screen">
@@ -25,7 +25,7 @@ const StudentListScreen: React.FC<StudentListScreenProps> = ({
         <button onClick={onAddNew}>Thêm Sinh Viên Mới</button>
       </header>
 
-      <SearchBar onSearch={onSearch} />
+      {/* <SearchBar onSearch={onSearch} /> */}
 
       <StudentList students={students} onDelete={onDelete} onEdit={onEdit} />
     </div>

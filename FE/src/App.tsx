@@ -18,6 +18,7 @@ import ProgramListScreen from "./screens/ProgramListScreen";
 import ProgramForm from "./components/ProgramForm";
 import "./App.css";
 import StudentSearchPanel from "./components/StudentSearchPanel";
+import ImportExportPanel from "./components/ImportExportPanel";
 type Tab = "students" | "faculties" | "statuses" | "programs";
 
 function App() {
@@ -362,6 +363,7 @@ function App() {
               // This prop can be left empty or used for legacy MSSV search if desired
             }}
           />
+          <ImportExportPanel />
         </>
       )}
       {currentTab === "students" && isFormOpen && (

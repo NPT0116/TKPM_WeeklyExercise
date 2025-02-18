@@ -1,134 +1,132 @@
 // src/components/ImportExportPanel.tsx
-import React from "react";
-import * as XLSX from "xlsx";
-import { Student } from "../interface";
+import React, { useState, useEffect } from "react";
 
-interface ImportExportPanelProps {
-  students: Student[];
-  onImport: (students: Student[]) => void;
+interface AppInfo {
+  version: string;
+  buildDate: string;
 }
 
-const ImportExportPanel: React.FC<ImportExportPanelProps> = ({
-  students,
-  onImport,
-}) => {
-  // Export danh sách sinh viên sang file JSON
-  const exportToJSON = () => {
-    const dataStr = JSON.stringify(students, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "students.json";
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+const ImportExportPanel: React.FC = () => {
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<string>("");
 
-  // Export danh sách sinh viên sang file Excel
-  const exportToExcel = () => {
-    // Chuyển đổi dữ liệu thành dạng object (định dạng theo ý bạn)
-    const wsData = students.map((s) => ({
-      StudentId: s.studentId,
-      FullName: s.fullName,
-      DateOfBirth: s.dateOfBirth, // Bạn có thể format lại nếu cần
-      Gender: s.gender, // Giả sử là "Nam"/"Nữ" hay số, tùy theo định dạng của bạn
-      Faculty: s.faculty?.name,
-      Course: s.course,
-      Program: s.program?.name,
-      Address: s.address,
-      Email: s.email,
-      PhoneNumber: s.phoneNumber,
-      Status: s.status?.name,
-    }));
-    const ws = XLSX.utils.json_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Students");
-    XLSX.writeFile(wb, "students.xlsx");
-  };
+  // Lấy thông tin version và build date từ backend
+  useEffect(() => {
+    fetch("http://localhost:5230/api/AppInfo/version")
+      .then((res) => res.json())
+      .then((data) => setAppInfo(data))
+      .catch((err) => {
+        console.error("Không lấy được thông tin phiên bản", err);
+      });
+  }, []);
 
-  // Import dữ liệu từ file JSON
-  const importFromJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const text = evt.target?.result;
-          if (typeof text === "string") {
-            const data = JSON.parse(text);
-            // Giả sử file JSON chứa mảng các đối tượng sinh viên theo định dạng bạn quy định
-            onImport(data);
-          }
-        } catch (error) {
-          console.error("Lỗi import JSON", error);
-        }
-      };
-      reader.readAsText(file);
+  // Xuất dữ liệu ra file JSON
+  const handleExportJSON = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5230/api/students/export/json"
+      );
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "students.json";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        alert("Xuất JSON thất bại.");
+      }
+    } catch (err) {
+      console.error("Lỗi xuất JSON", err);
+      alert("Lỗi xuất JSON");
     }
   };
 
-  // Import dữ liệu từ file Excel
-  const importFromExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const data = evt.target?.result;
-          if (data) {
-            const workbook = XLSX.read(data, { type: "binary" });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            // Chuyển đổi worksheet thành mảng đối tượng
-            const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, {
-              header: 1,
-            });
-            // Giả sử hàng đầu tiên là header
-            const headers = jsonData[0] as string[];
-            const importedStudents = jsonData.slice(1).map((row) => {
-              let obj: any = {};
-              headers.forEach((header, index) => {
-                obj[header] = row[index];
-              });
-              return obj;
-            });
-            onImport(importedStudents);
-          }
-        } catch (error) {
-          console.error("Lỗi import Excel", error);
+  // Xuất dữ liệu ra file Excel
+  const handleExportExcel = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5230/api/students/export/excel"
+      );
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "students.xlsx";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } else {
+        alert("Xuất Excel thất bại.");
+      }
+    } catch (err) {
+      console.error("Lỗi xuất Excel", err);
+      alert("Lỗi xuất Excel");
+    }
+  };
+
+  // Xử lý chọn file khi import
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setImportFile(e.target.files[0]);
+    }
+  };
+
+  // Xử lý upload file Excel
+  const handleImport = async () => {
+    if (!importFile) {
+      alert("Vui lòng chọn file trước.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", importFile);
+
+    try {
+      const response = await fetch(
+        "http://localhost:5230/api/students/import/excel",
+        {
+          method: "POST",
+          body: formData,
         }
-      };
-      reader.readAsBinaryString(file);
+      );
+      if (response.ok) {
+        setUploadMessage("Import thành công!");
+      } else {
+        setUploadMessage("Import thất bại.");
+      }
+    } catch (err) {
+      console.error("Lỗi import", err);
+      setUploadMessage("Lỗi import.");
     }
   };
 
   return (
     <div className="import-export-panel">
-      <h3>Import/Export Dữ liệu</h3>
+      <h2>Chức năng Import/Export dữ liệu</h2>
       <div className="export-section">
-        <button onClick={exportToJSON}>Export JSON</button>
-        <button onClick={exportToExcel}>Export Excel</button>
+        <button onClick={handleExportJSON}>Xuất dữ liệu JSON</button>
+        <button onClick={handleExportExcel}>Xuất dữ liệu Excel</button>
       </div>
       <div className="import-section">
-        <div>
-          <label htmlFor="jsonImport">Import JSON:</label>
-          <input
-            id="jsonImport"
-            type="file"
-            accept=".json"
-            onChange={importFromJSON}
-          />
-        </div>
-        <div>
-          <label htmlFor="excelImport">Import Excel:</label>
-          <input
-            id="excelImport"
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={importFromExcel}
-          />
-        </div>
+        <h3>Nhập dữ liệu từ Excel</h3>
+        <input type="file" accept=".xlsx" onChange={handleFileChange} />
+        <button onClick={handleImport}>Upload File</button>
+        {uploadMessage && <p>{uploadMessage}</p>}
       </div>
+      {appInfo && (
+        <div className="app-info">
+          <p>
+            <strong>Version:</strong> {appInfo.version}
+          </p>
+          <p>
+            <strong>Build Date:</strong> {appInfo.buildDate}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

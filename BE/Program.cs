@@ -5,11 +5,17 @@ using BE.Services;
 using BE.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Reflection; // Needed for Assembly
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole(); // Log to console
+    loggingBuilder.AddDebug();   // Log to debug output
+});
+
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -66,11 +72,11 @@ builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IApplicationProgramRepository, ApplicationProgramRepository>();
 builder.Services.AddScoped<IStudentStatusRepository, StudentStatusRepository>();
 builder.Services.AddScoped<IFacultyRepository, FacultyRepository>();
-// Ví dụ trong Startup.cs ConfigureServices:
 builder.Services.AddScoped<IStudentExportService, StudentExportService>();
 builder.Services.AddScoped<IStudentImportService, StudentImportService>();
 
 var app = builder.Build();
+
 app.UseCors("AllowAllOrigins");
 
 // Configure the HTTP request pipeline.
@@ -79,13 +85,15 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
-
 }
+
+var logger = app.Services.GetRequiredService<ILogger<Program>>(); // Get logger instance
+var assembly = Assembly.GetExecutingAssembly();
+var version = assembly.GetName().Version?.ToString() ?? "Unknown";
+var buildDate = System.IO.File.GetLastWriteTime(assembly.Location).ToString("yyyy-MM-dd HH:mm:ss");
+logger.LogInformation("Application Version: {Version}, Build Date: {BuildDate}", version, buildDate);
 
 app.UseHttpsRedirection();
 app.MapControllers();
 
-
-
 app.Run();
-
