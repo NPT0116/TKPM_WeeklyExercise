@@ -1,76 +1,71 @@
-# Quản Lý Sinh Viên
+# Quản Lý Sinh Viên - Version 2.0
 
-## Giới thiệu
+## Giới Thiệu
 
-Ứng dụng Quản Lý Sinh Viên cho phép người dùng thực hiện các chức năng CRUD (Tạo, Đọc, Cập nhật, Xóa) trên thông tin sinh viên. Ứng dụng được xây dựng với:
+Ứng dụng Quản Lý Sinh Viên cho phép người dùng thực hiện các thao tác CRUD (Tạo, Đọc, Cập nhật, Xóa) trên thông tin sinh viên. Version 2.0 được phát triển dựa trên phiên bản trước với các tính năng bổ sung nhằm tăng cường hiệu quả quản lý và hỗ trợ người dùng:
 
-- **Backend**: .NET
-- **Frontend**: React
-- **Cơ sở dữ liệu**: PostgreSQL
+- **Tích hợp import/export dữ liệu**: Hỗ trợ xuất dữ liệu dưới dạng JSON và Excel, cũng như nhập dữ liệu từ file Excel.
+- **Tính năng tìm kiếm nâng cao**: Cho phép tìm kiếm sinh viên theo khoa và theo tên (kết hợp với khoa).
+- **Hỗ trợ đổi tên và thêm mới**: Cho phép thay đổi tên và thêm mới các đối tượng liên quan như Khoa, Tình trạng sinh viên, và Chương trình đào tạo.
+- **Logging & Audit**: Tích hợp logging để hỗ trợ troubleshooting và audit.
+- **Hiển thị phiên bản và ngày build**: Cho phép người dùng xem thông tin phiên bản ứng dụng và ngày build.
 
-## Chức năng
+## Hướng Dẫn Sử Dụng Version 2.0
 
-### 1. Thêm Sinh Viên
+### 1. Tính Năng Import/Export Dữ Liệu
 
-Người dùng có thể nhập thông tin sinh viên mới, bao gồm:
+- **Export Dữ Liệu**:  
+  Người dùng có thể xuất dữ liệu sinh viên ra file JSON hoặc Excel thông qua các nút “Xuất dữ liệu JSON” và “Xuất dữ liệu Excel”.
+- **Import Dữ Liệu**:  
+  Người dùng chọn file Excel (định dạng \*.xlsx) chứa dữ liệu sinh viên theo template đã cung cấp và upload file để nhập dữ liệu vào hệ thống.  
+  _**Lưu ý**: File Excel mẫu cần có các cột: StudentId, FullName, DateOfBirth, Gender, FacultyId, Course, ProgramId, Address, Email, PhoneNumber, StatusId._
 
-- Mã số sinh viên (MSSV)
-- Họ và tên
-- Ngày sinh
-- Giới tính
-- Khoa
-- Địa chỉ
-- Email
-- Số điện thoại
+### 2. Tính Năng Tìm Kiếm Nâng Cao
 
-**Kiểm tra lỗi**: Ứng dụng sẽ kiểm tra tính hợp lệ của các trường thông tin, đảm bảo rằng không có trường nào bị bỏ trống và các định dạng (như email) là chính xác.
+- **Tìm theo MSSV**: Cho phép tìm kiếm sinh viên theo mã số sinh viên.
+- **Tìm theo Khoa**: Cho phép lọc danh sách sinh viên theo khoa.
+- **Tìm theo Khoa + Tên Sinh Viên**: Cho phép tìm kiếm theo sự kết hợp giữa khoa và tên sinh viên.
 
-### 2. Xem Danh Sách Sinh Viên
+### 3. Tính Năng Quản Lý Đối Tượng Khác
 
-Người dùng có thể xem danh sách tất cả sinh viên đã được thêm vào hệ thống. Danh sách sẽ hiển thị các thông tin cơ bản như MSSV, họ tên, khoa và tình trạng học tập.
+- **Khoa (Faculty)**: Cho phép đổi tên và thêm mới các khoa.
+- **Tình Trạng Sinh Viên (Student Status)**: Cho phép đổi tên và thêm mới các tình trạng sinh viên.
+- **Chương Trình Đào Tạo (Program)**: Cho phép đổi tên và thêm mới các chương trình đào tạo.
 
-### 3. Cập Nhật Thông Tin Sinh Viên
+### 4. Logging & Audit
 
-Người dùng có thể chọn một sinh viên trong danh sách và cập nhật thông tin của họ. Tất cả các trường thông tin đều có thể được chỉnh sửa.
+Hệ thống tích hợp logging nhằm:
 
-**Kiểm tra lỗi**: Tương tự như chức năng thêm, ứng dụng sẽ kiểm tra tính hợp lệ của các trường thông tin trước khi lưu thay đổi.
+- Ghi lại các thao tác nhập/xuất dữ liệu.
+- Ghi log các lỗi phát sinh trong quá trình xử lý, giúp troubleshooting và audit sau này.
 
-### 4. Xóa Sinh Viên
+### 5. Hiển Thị Phiên Bản và Ngày Build
 
-Người dùng có thể xóa thông tin của một sinh viên khỏi hệ thống. Sau khi xác nhận, sinh viên sẽ được xóa khỏi danh sách.
+Ứng dụng hiện tại cho phép người dùng xem phiên bản và ngày build của ứng dụng. Thông tin này sẽ được hiển thị trên giao diện import/export và được lấy từ backend qua endpoint `/api/AppInfo/version`.
 
-**Kiểm tra lỗi**: Ứng dụng sẽ thông báo nếu có lỗi xảy ra trong quá trình xóa, chẳng hạn như không tìm thấy sinh viên.
+## Demo Video
 
-## Công Nghệ Sử Dụng
+Bạn có thể xem clip demo các tính năng mới của Version 2.0 tại đây:  
+[Demo Video Version 2](https://drive.google.com/file/d/1604EpAfp3aGwsyvBmw78_7ICM_SWNWsJ/view?usp=sharing)
 
-- **.NET**: Được sử dụng để xây dựng API backend.
-- **React**: Được sử dụng để xây dựng giao diện người dùng.
-- **PostgreSQL**: Được sử dụng để lưu trữ dữ liệu sinh viên.
+## Hình Ảnh Minh Chứng
 
-## Cài Đặt
+Trong thư mục `screenshots/` của repository, bạn sẽ tìm thấy các hình ảnh minh chứng cho các tính năng mới như:
 
-1. Clone repository về máy:
+- Giao diện xuất dữ liệu JSON và Excel.
+- Giao diện import file Excel.
+- Giao diện tìm kiếm nâng cao theo khoa và tên sinh viên.
+- Hiển thị thông tin phiên bản và ngày build.
+
+## Các Yêu Cầu Chưa Hoàn Thành / Chưa Làm Kịp
+
+- **Một số tính năng giao diện nâng cao**: Chưa có sự tinh chỉnh giao diện cho các màn hình quản lý đối tượng (Khoa, Tình trạng, Chương trình) theo tiêu chuẩn responsive.
+- **Cải thiện chức năng tìm kiếm**: Một số yêu cầu về tính năng tìm kiếm nâng cao vẫn cần được tối ưu.
+- **Báo cáo lỗi và thống kê audit**: Chức năng ghi log đã được tích hợp, tuy nhiên cần bổ sung báo cáo thống kê lỗi trong môi trường production.
+
+## Cài Đặt & Chạy Ứng Dụng
+
+1. **Clone repository về máy:**
    ```bash
    git clone <repository-url>
    ```
-2. Cài đặt các gói cần thiết cho backend và frontend:
-   ```bash
-   cd backend
-   dotnet restore
-   cd ../frontend
-   npm install
-   ```
-3. Cấu hình kết nối đến cơ sở dữ liệu PostgreSQL trong file cấu hình của backend.
-4. Chạy ứng dụng:
-   - Backend:
-     ```bash
-     dotnet run
-     ```
-   - Frontend:
-     ```bash
-     npm start
-     ```
-
-## Kết Luận
-
-Ứng dụng Quản Lý Sinh Viên cung cấp một giải pháp đơn giản và hiệu quả để quản lý thông tin sinh viên với các chức năng CRUD đầy đủ và kiểm tra lỗi linh động. Hãy thử nghiệm và đóng góp ý kiến để cải thiện ứng dụng!
