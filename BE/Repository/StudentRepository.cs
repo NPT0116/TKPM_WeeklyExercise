@@ -1,9 +1,12 @@
 using System;
+using BE.Config;
 using BE.Data;
 using BE.Dto;
+using BE.Exceptions.Student;
 using BE.Interface;
 using BE.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace BE.Repository;
 
@@ -84,50 +87,51 @@ public class StudentRepository : IStudentRepository
             };
         }
 
-        public async Task CreateAsync(StudentCreateDto student)
-        {
-            var studentEntity = new Student
-            {
-                StudentId = student.StudentId,
-                FullName = student.FullName,
-                DateOfBirth = student.DateOfBirth,
-                Gender = student.Gender,
-                FacultyId = student.FacultyId,
-                Course = student.Course,
-                ProgramId = student.ProgramId,
-                Address = student.Address,
-                Email = student.Email,
-                PhoneNumber = student.PhoneNumber,
-                StatusId = student.StatusId
-            };
-            
+       public async Task CreateAsync(StudentCreateDto student)
+{
 
-            await _context.Students.AddAsync(studentEntity);
-            await _context.SaveChangesAsync();
-        }
 
-        public async Task UpdateAsync(StudentUpdateDto student)
-        {
-            var studentEntity = await _context.Students.FindAsync(student.StudentId);
-            if (studentEntity == null)
-            {
-                throw new KeyNotFoundException($"Student with ID {student.StudentId} not found");
-            }
+    var studentEntity = new Student
+    {
+        StudentId = student.StudentId,
+        FullName = student.FullName,
+        DateOfBirth = student.DateOfBirth,
+        Gender = student.Gender,
+        FacultyId = student.FacultyId,
+        Course = student.Course,
+        ProgramId = student.ProgramId,
+        Address = student.Address,
+        Email = student.Email,
+        PhoneNumber = student.PhoneNumber,
+        StatusId = student.StatusId
+    };
 
-            studentEntity.FullName = student.FullName;
-            studentEntity.DateOfBirth = student.DateOfBirth.ToUniversalTime();
-            studentEntity.Gender = student.Gender;
-            studentEntity.FacultyId = student.FacultyId;
-            studentEntity.Course = student.Course;
-            studentEntity.ProgramId = student.ProgramId;
-            studentEntity.Address = student.Address;
-            studentEntity.Email = student.Email;
-            studentEntity.PhoneNumber = student.PhoneNumber;
-            studentEntity.StatusId = student.StatusId;
+    await _context.Students.AddAsync(studentEntity);
+    await _context.SaveChangesAsync();
+}
 
-            _context.Students.Update(studentEntity);
-            await _context.SaveChangesAsync();
-        }
+public async Task UpdateAsync(StudentUpdateDto student)
+{
+    var studentEntity = await _context.Students.FindAsync(student.StudentId);
+    if (studentEntity == null)
+    {
+        throw new StudentNotFound(student.StudentId);
+    }
+
+    studentEntity.FullName = student.FullName;
+    studentEntity.DateOfBirth = student.DateOfBirth.ToUniversalTime();
+    studentEntity.Gender = student.Gender;
+    studentEntity.FacultyId = student.FacultyId;
+    studentEntity.Course = student.Course;
+    studentEntity.ProgramId = student.ProgramId;
+    studentEntity.Address = student.Address;
+    studentEntity.Email = student.Email;
+    studentEntity.PhoneNumber = student.PhoneNumber;
+    studentEntity.StatusId = student.StatusId;
+
+    _context.Students.Update(studentEntity);
+    await _context.SaveChangesAsync();
+}
 
         public async Task<bool> DeleteAsync(string id)
         {

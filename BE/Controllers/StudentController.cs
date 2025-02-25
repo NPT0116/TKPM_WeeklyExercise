@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BE.Dto;
+using BE.Exceptions.Student;
 using BE.Interface;
 using BE.Models;
 using BE.Services;
@@ -16,11 +17,13 @@ namespace BE.Controller
         private readonly IStudentRepository _studentRepo;
         private readonly IStudentExportService _exportService;
         private readonly IStudentImportService _importService;
-        public StudentController(IStudentRepository studentRepo, IStudentExportService exportService, IStudentImportService importService)
+        private readonly IValidateStudentEmail _validateStudentEmail;
+        public StudentController(IStudentRepository studentRepo, IStudentExportService exportService, IStudentImportService importService, IValidateStudentEmail validateStudentEmail)
         {
             _studentRepo = studentRepo;
             _exportService = exportService;
             _importService = importService;
+            _validateStudentEmail = validateStudentEmail;
         }
 
         [HttpGet]
@@ -59,6 +62,10 @@ namespace BE.Controller
                     Errors = new[] { "Student with this ID already exists." }
                 });
             }
+            if (!_validateStudentEmail.IsValidEmail(student.Email))
+            {
+                throw new StudentEmailFormatError(_validateStudentEmail.GetAllowedDomain());
+            }
             await _studentRepo.CreateAsync(student);
             return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, new Response<StudentCreateDto>(student));
         }
@@ -74,6 +81,10 @@ namespace BE.Controller
                     Message = "Student ID mismatch.",
                     Errors = new[] { "Student ID mismatch." }
                 });
+            }
+            if (!_validateStudentEmail.IsValidEmail(student.Email))
+            {
+                throw new StudentEmailFormatError(_validateStudentEmail.GetAllowedDomain());
             }
             var existingStudent = await _studentRepo.GetByIdAsync(id);
             if (existingStudent == null)

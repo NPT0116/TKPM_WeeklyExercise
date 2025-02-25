@@ -1,5 +1,7 @@
+using BE.Config;
 using BE.Data;
 using BE.Interface;
+using BE.Middlewares;
 using BE.Repository;
 using BE.Services;
 using BE.Utils;
@@ -14,6 +16,7 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddConsole(); // Log to console
     loggingBuilder.AddDebug();   // Log to debug output
 });
+builder.Services.AddProblemDetails();
 
 // Add services to the container.
 builder.Services.AddOpenApi();
@@ -74,7 +77,9 @@ builder.Services.AddScoped<IStudentStatusRepository, StudentStatusRepository>();
 builder.Services.AddScoped<IFacultyRepository, FacultyRepository>();
 builder.Services.AddScoped<IStudentExportService, StudentExportService>();
 builder.Services.AddScoped<IStudentImportService, StudentImportService>();
-
+builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddExceptionHandler<GlobalExceptionHandlers>();
+builder.Services.AddScoped<IValidateStudentEmail, ValidateStudentEmail>();
 var app = builder.Build();
 
 app.UseCors("AllowAllOrigins");
@@ -94,6 +99,6 @@ var buildDate = System.IO.File.GetLastWriteTime(assembly.Location).ToString("yyy
 logger.LogInformation("Application Version: {Version}, Build Date: {BuildDate}", version, buildDate);
 
 app.UseHttpsRedirection();
+app.UseExceptionHandler(); // Works
 app.MapControllers();
-
 app.Run();
