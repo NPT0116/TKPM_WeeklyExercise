@@ -18,12 +18,14 @@ namespace BE.Controller
         private readonly IStudentExportService _exportService;
         private readonly IStudentImportService _importService;
         private readonly IValidateStudentEmail _validateStudentEmail;
-        public StudentController(IStudentRepository studentRepo, IStudentExportService exportService, IStudentImportService importService, IValidateStudentEmail validateStudentEmail)
+        private readonly IValidateStudentPhone _validateStudentPhone;
+        public StudentController(IStudentRepository studentRepo, IStudentExportService exportService, IStudentImportService importService, IValidateStudentEmail validateStudentEmail, IValidateStudentPhone validateStudentPhone)
         {
             _studentRepo = studentRepo;
             _exportService = exportService;
             _importService = importService;
             _validateStudentEmail = validateStudentEmail;
+            _validateStudentPhone = validateStudentPhone;
         }
 
         [HttpGet]
@@ -66,6 +68,10 @@ namespace BE.Controller
             {
                 throw new StudentEmailFormatError(_validateStudentEmail.GetAllowedDomain());
             }
+               if (!_validateStudentPhone.IsValidPhone(student.PhoneNumber))
+            {
+                throw new StudentPhoneFormatError(_validateStudentPhone.GetAllowedPattern());
+            }
             await _studentRepo.CreateAsync(student);
             return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, new Response<StudentCreateDto>(student));
         }
@@ -85,6 +91,10 @@ namespace BE.Controller
             if (!_validateStudentEmail.IsValidEmail(student.Email))
             {
                 throw new StudentEmailFormatError(_validateStudentEmail.GetAllowedDomain());
+            }
+            if (!_validateStudentPhone.IsValidPhone(student.PhoneNumber))
+            {
+                throw new StudentPhoneFormatError(_validateStudentPhone.GetAllowedPattern());
             }
             var existingStudent = await _studentRepo.GetByIdAsync(id);
             if (existingStudent == null)

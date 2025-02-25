@@ -80,6 +80,7 @@ builder.Services.AddScoped<IStudentImportService, StudentImportService>();
 builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddExceptionHandler<GlobalExceptionHandlers>();
 builder.Services.AddScoped<IValidateStudentEmail, ValidateStudentEmail>();
+builder.Services.AddScoped<IValidateStudentPhone, ValidateStudentPhone>();
 var app = builder.Build();
 
 app.UseCors("AllowAllOrigins");
