@@ -38,23 +38,6 @@ namespace BE.Migrations
                     b.HasKey("ProgramId");
 
                     b.ToTable("ApplicationPrograms");
-
-                    b.HasData(
-                        new
-                        {
-                            ProgramId = 1,
-                            Name = "Chất lượng cao"
-                        },
-                        new
-                        {
-                            ProgramId = 2,
-                            Name = "Tiên tiến"
-                        },
-                        new
-                        {
-                            ProgramId = 3,
-                            Name = "Đại trà"
-                        });
                 });
 
             modelBuilder.Entity("BE.Models.Faculty", b =>
@@ -72,28 +55,6 @@ namespace BE.Migrations
                     b.HasKey("FacultyId");
 
                     b.ToTable("Faculties");
-
-                    b.HasData(
-                        new
-                        {
-                            FacultyId = 1,
-                            Name = "Khoa Luật"
-                        },
-                        new
-                        {
-                            FacultyId = 2,
-                            Name = "Khoa Tiếng Anh thương mại"
-                        },
-                        new
-                        {
-                            FacultyId = 3,
-                            Name = "Khoa Tiếng Nhật"
-                        },
-                        new
-                        {
-                            FacultyId = 4,
-                            Name = "Khoa Tiếng Pháp"
-                        });
                 });
 
             modelBuilder.Entity("BE.Models.Student", b =>
@@ -144,22 +105,6 @@ namespace BE.Migrations
                     b.HasIndex("StatusId");
 
                     b.ToTable("Students");
-
-                    b.HasData(
-                        new
-                        {
-                            StudentId = "22127389",
-                            Address = "Bình Chánh",
-                            Course = 2022,
-                            DateOfBirth = new DateTime(2004, 1, 15, 17, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "thanh1612004@gmail.com",
-                            FacultyId = 1,
-                            FullName = "Nguyễn Phúc Thành",
-                            Gender = 1,
-                            PhoneNumber = "0915361073",
-                            ProgramId = 1,
-                            StatusId = 1
-                        });
                 });
 
             modelBuilder.Entity("BE.Models.StudentStatus", b =>
@@ -177,28 +122,6 @@ namespace BE.Migrations
                     b.HasKey("StatusId");
 
                     b.ToTable("StudentStatuses");
-
-                    b.HasData(
-                        new
-                        {
-                            StatusId = 1,
-                            Name = "Đang học"
-                        },
-                        new
-                        {
-                            StatusId = 2,
-                            Name = "Đã tốt nghiệp"
-                        },
-                        new
-                        {
-                            StatusId = 3,
-                            Name = "Đã thôi học"
-                        },
-                        new
-                        {
-                            StatusId = 4,
-                            Name = "Tạm dừng học"
-                        });
                 });
 
             modelBuilder.Entity("BE.Models.Student", b =>

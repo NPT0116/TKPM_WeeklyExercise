@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using BE.Dto;
-using BE.Exceptions.Student;
 using BE.Interface;
 using BE.Models;
 using BE.Services;
@@ -14,18 +14,21 @@ namespace BE.Controller
     [ApiController]
     public class StudentController : ControllerBase
     {
+        private readonly IStudentService _studentService;
         private readonly IStudentRepository _studentRepo;
         private readonly IStudentExportService _exportService;
         private readonly IStudentImportService _importService;
-        private readonly IValidateStudentEmail _validateStudentEmail;
-        private readonly IValidateStudentPhone _validateStudentPhone;
-        public StudentController(IStudentRepository studentRepo, IStudentExportService exportService, IStudentImportService importService, IValidateStudentEmail validateStudentEmail, IValidateStudentPhone validateStudentPhone)
+
+        public StudentController(
+            IStudentService studentService,
+            IStudentRepository studentRepo,
+            IStudentExportService exportService,
+            IStudentImportService importService)
         {
+            _studentService = studentService;
             _studentRepo = studentRepo;
             _exportService = exportService;
             _importService = importService;
-            _validateStudentEmail = validateStudentEmail;
-            _validateStudentPhone = validateStudentPhone;
         }
 
         [HttpGet]
@@ -54,26 +57,20 @@ namespace BE.Controller
         [HttpPost]
         public async Task<ActionResult<Response<StudentCreateDto>>> AddStudent(StudentCreateDto student)
         {
-            var existingStudent = await _studentRepo.GetByIdAsync(student.StudentId);
-            if (existingStudent != null)
+            try
+            {
+                var newStudent = await _studentService.AddStudentServiceAsync(student);
+                return CreatedAtAction(nameof(GetStudent), new { id = newStudent.StudentId }, new Response<StudentCreateDto>(newStudent));
+            }
+            catch (Exception ex)
             {
                 return BadRequest(new Response<StudentCreateDto>
                 {
                     Succeeded = false,
-                    Message = "Student with this ID already exists.",
-                    Errors = new[] { "Student with this ID already exists." }
+                    Message = ex.Message,
+                    Errors = new[] { ex.Message }
                 });
             }
-            if (!_validateStudentEmail.IsValidEmail(student.Email))
-            {
-                throw new StudentEmailFormatError(_validateStudentEmail.GetAllowedDomain());
-            }
-               if (!_validateStudentPhone.IsValidPhone(student.PhoneNumber))
-            {
-                throw new StudentPhoneFormatError(_validateStudentPhone.GetAllowedPattern());
-            }
-            await _studentRepo.CreateAsync(student);
-            return CreatedAtAction(nameof(GetStudent), new { id = student.StudentId }, new Response<StudentCreateDto>(student));
         }
 
         [HttpPut("{id}")]
@@ -88,27 +85,21 @@ namespace BE.Controller
                     Errors = new[] { "Student ID mismatch." }
                 });
             }
-            if (!_validateStudentEmail.IsValidEmail(student.Email))
+
+            try
             {
-                throw new StudentEmailFormatError(_validateStudentEmail.GetAllowedDomain());
+                var updatedStudent = await _studentService.UpdateStudentServiceAsync(student);
+                return Ok(new Response<StudentUpdateDto>(updatedStudent, "Student updated successfully.", true));
             }
-            if (!_validateStudentPhone.IsValidPhone(student.PhoneNumber))
-            {
-                throw new StudentPhoneFormatError(_validateStudentPhone.GetAllowedPattern());
-            }
-            var existingStudent = await _studentRepo.GetByIdAsync(id);
-            if (existingStudent == null)
+            catch (Exception ex)
             {
                 return BadRequest(new Response<StudentUpdateDto>
                 {
                     Succeeded = false,
-                    Message = "Student ID mismatch.",
-                    Errors = new[] { "Student ID mismatch." }
-                });            }
-            await _studentRepo.UpdateAsync(student);
-        return Ok(new Response<StudentUpdateDto>(null, "Student updated successfully.", true));
-
-
+                    Message = ex.Message,
+                    Errors = new[] { ex.Message }
+                });
+            }
         }
 
         [HttpDelete("{id}")]
@@ -120,13 +111,12 @@ namespace BE.Controller
                 return NotFound(new Response<string>("Student not found."));
             }
             await _studentRepo.DeleteAsync(id);
-        return Ok(new Response<string>(null, "Student deleted successfully.", true));
+            return Ok(new Response<string>(null, "Student deleted successfully.", true));
         }
 
-        // In BE/Controller/StudentController.cs
         [HttpGet("search")]
         public async Task<ActionResult<Response<List<StudentDto>>>> SearchStudents(
-            [FromQuery] int? facultyId, 
+            [FromQuery] int? facultyId,
             [FromQuery] string name)
         {
             var students = await _studentRepo.SearchAsync(facultyId, name);
@@ -140,7 +130,7 @@ namespace BE.Controller
             return Ok(new Response<List<StudentDto>>(students));
         }
 
-          [HttpGet("export/excel")]
+        [HttpGet("export/excel")]
         public async Task<IActionResult> ExportStudentsToExcel()
         {
             var content = await _exportService.ExportStudentsToExcelAsync();
@@ -164,7 +154,6 @@ namespace BE.Controller
             {
                 return BadRequest("No file uploaded.");
             }
-
             await _importService.ImportStudentsFromExcelAsync(fileUpload.File);
             return Ok(new Response<string>(null, "Import successful", true));
         }

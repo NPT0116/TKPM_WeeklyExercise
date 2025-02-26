@@ -8,6 +8,7 @@ import {
   program,
 } from "../interface";
 import { ApiResponse } from "../api"; // Adjust the import path as needed
+import ErrorPopup from "./ErrorPopup"; // Import ErrorPopup component
 
 interface StudentFormProps {
   student: Student | null;
@@ -42,28 +43,31 @@ const StudentForm: React.FC<StudentFormProps> = ({
   onClose,
   programs,
 }) => {
+  console.log(student);
+
   const [formData, setFormData] = useState<StudentRequest>({
     studentId: "",
     fullName: "",
     dateOfBirth: new Date().toISOString().split("T")[0],
     gender: 0,
-    facultyId: faculties[0]?.facultyId || 1,
+    facultyId: student?.faculty?.id || faculties[0]?.facultyId || 1,
     course: new Date().getFullYear(),
-    programId: programs[0]?.programId || 1,
+    programId: student?.program?.id || programs[0]?.programId || 1,
     address: "",
     email: "",
     phoneNumber: "",
-    statusId: statuses[0]?.statusId || 1,
+    statusId: student?.status?.id || statuses[0]?.statusId || 1,
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string>("");
 
   useEffect(() => {
     if (student) {
       setFormData({
         ...student,
-        // When editing, use related properties (if available) or defaults
-        statusId: student.status?.statusId || statuses[0]?.statusId || 1,
+        // Khi chỉnh sửa, sử dụng các thuộc tính liên quan nếu có, hoặc mặc định
+        statusId: student.status?.id || statuses[0]?.statusId || 1,
         programId: student.program?.id || programs[0]?.programId || 1,
         facultyId: student.faculty?.id || faculties[0]?.facultyId || 1,
       });
@@ -83,7 +87,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
     try {
       const date = new Date(formData.dateOfBirth);
       if (isNaN(date.getTime())) {
-        throw new Error("Invalid date format");
+        setFormError("Invalid date format");
+        return;
       }
 
       const submissionData: StudentRequest = {
@@ -99,26 +104,41 @@ const StudentForm: React.FC<StudentFormProps> = ({
       const response = await onSubmit(submissionData);
       if (!response.succeeded) {
         const newFieldErrors: Record<string, string> = {};
+        // Kiểm tra lỗi trả về từ API và gán vào các field tương ứng
         if (
           response.errors &&
           response.errors.includes("Student with this ID already exists.")
         ) {
           newFieldErrors.studentId = "Student ID already exists.";
         }
+        // Nếu có lỗi chung (không thuộc field cụ thể) thì hiển thị popup
+        if (response.message) {
+          setFormError(response.message);
+        }
         setFieldErrors(newFieldErrors);
       } else {
+        // Reset lỗi nếu thành công
         setFieldErrors({});
+        setFormError("");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Form submission error:", error);
+      setFormError(error.message || "An unexpected error occurred.");
       setFieldErrors({});
     }
+  };
+
+  const closeErrorPopup = () => {
+    setFormError("");
   };
 
   return (
     <div className="student-form">
       <h2>{student ? "Sửa Sinh Viên" : "Thêm Sinh Viên Mới"}</h2>
-      {error && <div className="error-message">{error}</div>}
+      {/* Nếu có lỗi chung, hiển thị ErrorPopup */}
+      {formError && (
+        <ErrorPopup message={formError} onClose={closeErrorPopup} />
+      )}
       <button
         type="button"
         onClick={() => setFormData(sampleStudent)}

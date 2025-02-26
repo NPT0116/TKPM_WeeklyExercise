@@ -17,6 +17,7 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddDebug();   // Log to debug output
 });
 builder.Services.AddProblemDetails();
+builder.Configuration.AddJsonFile("seedData.json", optional: true, reloadOnChange: true);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
@@ -78,9 +79,14 @@ builder.Services.AddScoped<IFacultyRepository, FacultyRepository>();
 builder.Services.AddScoped<IStudentExportService, StudentExportService>();
 builder.Services.AddScoped<IStudentImportService, StudentImportService>();
 builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.Configure<PhoneSetting>(builder.Configuration.GetSection("PhoneSetting"));
+builder.Services.Configure<StudentStatusTransitionConfig>(builder.Configuration.GetSection("StudentStatusTransitionSettings"));
+builder.Services.AddScoped<IStudentStatusTransitionService, StudentStatusTransitionService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandlers>();
 builder.Services.AddScoped<IValidateStudentEmail, ValidateStudentEmail>();
 builder.Services.AddScoped<IValidateStudentPhone, ValidateStudentPhone>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+
 var app = builder.Build();
 
 app.UseCors("AllowAllOrigins");

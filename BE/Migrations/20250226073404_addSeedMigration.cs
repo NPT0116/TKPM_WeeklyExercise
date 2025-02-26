@@ -4,12 +4,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
-
 namespace BE.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class addSeedMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -91,43 +89,6 @@ namespace BE.Migrations
                         principalColumn: "StatusId",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.InsertData(
-                table: "ApplicationPrograms",
-                columns: new[] { "ProgramId", "Name" },
-                values: new object[,]
-                {
-                    { 1, "Chất lượng cao" },
-                    { 2, "Tiên tiến" },
-                    { 3, "Đại trà" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Faculties",
-                columns: new[] { "FacultyId", "Name" },
-                values: new object[,]
-                {
-                    { 1, "Khoa Luật" },
-                    { 2, "Khoa Tiếng Anh thương mại" },
-                    { 3, "Khoa Tiếng Nhật" },
-                    { 4, "Khoa Tiếng Pháp" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "StudentStatuses",
-                columns: new[] { "StatusId", "Name" },
-                values: new object[,]
-                {
-                    { 1, "Đang học" },
-                    { 2, "Đã tốt nghiệp" },
-                    { 3, "Đã thôi học" },
-                    { 4, "Tạm dừng học" }
-                });
-
-            migrationBuilder.InsertData(
-                table: "Students",
-                columns: new[] { "StudentId", "Address", "Course", "DateOfBirth", "Email", "FacultyId", "FullName", "Gender", "PhoneNumber", "ProgramId", "StatusId" },
-                values: new object[] { "22127389", "Bình Chánh", 2022, new DateTime(2004, 1, 15, 17, 0, 0, 0, DateTimeKind.Utc), "thanh1612004@gmail.com", 1, "Nguyễn Phúc Thành", 1, "0915361073", 1, 1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Students_FacultyId",

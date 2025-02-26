@@ -21,7 +21,7 @@ export interface Student {
     name: string;
   };
   status?: {
-    statusId: number;
+    id: number;
     name: string;
   };
 }

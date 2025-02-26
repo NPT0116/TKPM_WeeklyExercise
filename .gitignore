@@ -13,6 +13,20 @@ BE/*.log
 BE/.vs/
 BE/.vscode/
 
+# .NET
+Test/bin/
+Test/obj/
+Test/*.user
+Test/*.suo
+Test/*.sln.docstates
+Test/*.dbmdl
+Test/*.dbproj.schemaview
+Test/*.jfm
+Test/*.pdb
+Test/*.mdb
+Test/*.log
+Test/.vs/
+Test/.vscode/
 # React
 FE/node_modules/
 FE/build/
