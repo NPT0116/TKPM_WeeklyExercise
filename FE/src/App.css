@@ -322,3 +322,37 @@
 .error-message div {
   margin: 4px 0;
 }
+/* CSS for ErrorPopup (có thể đưa vào file ErrorPopup.css) */
+.error-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.error-popup {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 4px;
+  width: 300px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.error-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}

@@ -1,0 +1,42 @@
+{
+  "StudentStatusTransitionSettings": {
+    "AllowedTransitions": {
+      "1": [2, 3, 4],
+      "2": [1],
+      "3": [],
+      "4": [1, 2]
+    }
+  },
+  "Faculties": [
+    { "FacultyId": 1, "Name": "Khoa Luật" },
+    { "FacultyId": 2, "Name": "Khoa Tiếng Anh thương mại" },
+    { "FacultyId": 3, "Name": "Khoa Tiếng Nhật" },
+    { "FacultyId": 4, "Name": "Khoa Tiếng Pháp" }
+  ],
+  "StudentStatuses": [
+    { "StatusId": 1, "Name": "Đang học" },
+    { "StatusId": 2, "Name": "Bảo lưu" },
+    { "StatusId": 3, "Name": "Tốt nghiệp" },
+    { "StatusId": 4, "Name": "Đình chỉ" }
+  ],
+  "ApplicationPrograms": [
+    { "ProgramId": 1, "Name": "Chất lượng cao" },
+    { "ProgramId": 2, "Name": "Tiên tiến" },
+    { "ProgramId": 3, "Name": "Đại trà" }
+  ],
+  "Students": [
+    {
+      "StudentId": "22127389",
+      "FullName": "Nguyễn Phúc Thành",
+      "DateOfBirth": "2004-01-16T00:00:00Z",
+      "Gender": 0,
+      "FacultyId": 1,
+      "Course": 2022,
+      "ProgramId": 1,
+      "Address": "Bình Chánh",
+      "Email": "thanh1612004@student.university.edu.vn",
+      "PhoneNumber": "0915361073",
+      "StatusId": 1
+    }
+  ]
+}

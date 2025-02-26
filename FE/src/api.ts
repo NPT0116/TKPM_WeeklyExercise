@@ -23,23 +23,36 @@ const parseApiResponse = async <T>(
     const text = await response.text();
     if (!text) {
       // 204 No Content case
-      return { data: null, succeeded: true, errors: [], message: "No Content" };
+      const result: ApiResponse<T> = {
+        data: null,
+        succeeded: true,
+        errors: [],
+        message: "No Content",
+      };
+      return result;
     }
     const responseData = JSON.parse(text);
+    let result: ApiResponse<T>;
     if (!response.ok) {
-      return {
+      result = {
         data: null,
         succeeded: false,
         errors: responseData.errors || [],
         message: responseData.message || "An error occurred",
       };
+    } else {
+      result = {
+        data: responseData.data,
+        succeeded: true,
+        errors: [],
+        message: "",
+      };
     }
-    return {
-      data: responseData.data,
-      succeeded: true,
-      errors: [],
-      message: "",
-    };
+    // Nếu có lỗi (succeeded false) thì log ra console
+    if (!result.succeeded) {
+      console.error("API error:", result.message, result.errors);
+    }
+    return result;
   } catch (e) {
     throw new Error("Failed to parse response: " + e);
   }
@@ -63,6 +76,7 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(student),
     });
+    console.log(response);
     return parseApiResponse<Student>(response);
   },
   updateStudent: async (
@@ -76,6 +90,7 @@ export const api = {
         body: JSON.stringify(student),
       }
     );
+    console.log(response);
     return parseApiResponse<Student>(response);
   },
   deleteStudent: async (id: string): Promise<ApiResponse<string>> => {
@@ -86,8 +101,6 @@ export const api = {
   },
 
   // --- New Search Endpoints ---
-
-  // Search by faculty and/or student name (both query parameters are optional)
   searchStudents: async (
     facultyId: number | null,
     name: string
@@ -102,7 +115,6 @@ export const api = {
     return parseApiResponse<Student[]>(response);
   },
 
-  // Get students by faculty id only
   getStudentsByFacultyId: async (
     facultyId: number
   ): Promise<ApiResponse<Student[]>> => {
