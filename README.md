@@ -1,71 +1,87 @@
-# Quản Lý Sinh Viên - Version 2.0
+# Ex03 – Design Changes and Testing Improvements
 
-## Giới Thiệu
+This document outlines the design changes introduced in Ex03 to support critical business logic requirements and to improve testability. In the new design, a dedicated service layer is introduced between the controller and repository. This service layer encapsulates all business logic, making it easier to unit test and maintain.
 
-Ứng dụng Quản Lý Sinh Viên cho phép người dùng thực hiện các thao tác CRUD (Tạo, Đọc, Cập nhật, Xóa) trên thông tin sinh viên. Version 2.0 được phát triển dựa trên phiên bản trước với các tính năng bổ sung nhằm tăng cường hiệu quả quản lý và hỗ trợ người dùng:
+---
 
-- **Tích hợp import/export dữ liệu**: Hỗ trợ xuất dữ liệu dưới dạng JSON và Excel, cũng như nhập dữ liệu từ file Excel.
-- **Tính năng tìm kiếm nâng cao**: Cho phép tìm kiếm sinh viên theo khoa và theo tên (kết hợp với khoa).
-- **Hỗ trợ đổi tên và thêm mới**: Cho phép thay đổi tên và thêm mới các đối tượng liên quan như Khoa, Tình trạng sinh viên, và Chương trình đào tạo.
-- **Logging & Audit**: Tích hợp logging để hỗ trợ troubleshooting và audit.
-- **Hiển thị phiên bản và ngày build**: Cho phép người dùng xem thông tin phiên bản ứng dụng và ngày build.
+## Business Logic Requirements
 
-## Hướng Dẫn Sử Dụng Version 2.0
+1. **Unique Student ID (MSSV)**
 
-### 1. Tính Năng Import/Export Dữ Liệu
+   - When adding or updating a student, the Student ID must be unique. The system ensures that no two students share the same MSSV.
 
-- **Export Dữ Liệu**:  
-  Người dùng có thể xuất dữ liệu sinh viên ra file JSON hoặc Excel thông qua các nút “Xuất dữ liệu JSON” và “Xuất dữ liệu Excel”.
-- **Import Dữ Liệu**:  
-  Người dùng chọn file Excel (định dạng \*.xlsx) chứa dữ liệu sinh viên theo template đã cung cấp và upload file để nhập dữ liệu vào hệ thống.  
-  _**Lưu ý**: File Excel mẫu cần có các cột: StudentId, FullName, DateOfBirth, Gender, FacultyId, Course, ProgramId, Address, Email, PhoneNumber, StatusId._
+2. **Configurable Email Domain**
 
-### 2. Tính Năng Tìm Kiếm Nâng Cao
+   - Email addresses must belong to a specific domain. For example, only emails ending with `@student.university.edu.vn` are accepted.
+   - The allowed domain is configurable via application settings.
 
-- **Tìm theo MSSV**: Cho phép tìm kiếm sinh viên theo mã số sinh viên.
-- **Tìm theo Khoa**: Cho phép lọc danh sách sinh viên theo khoa.
-- **Tìm theo Khoa + Tên Sinh Viên**: Cho phép tìm kiếm theo sự kết hợp giữa khoa và tên sinh viên.
+3. **Configurable Phone Number Format**
 
-### 3. Tính Năng Quản Lý Đối Tượng Khác
+   - Phone numbers must follow a valid format for a given country. For Vietnam, acceptable formats are either starting with `+84` or `0[3|5|7|8|9]` followed by 8 digits.
+   - This phone number format is configurable through application settings.
 
-- **Khoa (Faculty)**: Cho phép đổi tên và thêm mới các khoa.
-- **Tình Trạng Sinh Viên (Student Status)**: Cho phép đổi tên và thêm mới các tình trạng sinh viên.
-- **Chương Trình Đào Tạo (Program)**: Cho phép đổi tên và thêm mới các chương trình đào tạo.
+4. **Student Status Transition Rules**
+   - Student status can only change according to specific business rules:
+     - For example, a student with status `"Đang học"` can transition to `"Bảo lưu"`, `"Tốt nghiệp"`, or `"Đình chỉ"`.
+     - A student with status `"Đã tốt nghiệp"` is not allowed to revert back to `"Đang học"`.
+   - These transitions are configurable via application settings.
 
-### 4. Logging & Audit
+---
 
-Hệ thống tích hợp logging nhằm:
+## Design Solution
 
-- Ghi lại các thao tác nhập/xuất dữ liệu.
-- Ghi log các lỗi phát sinh trong quá trình xử lý, giúp troubleshooting và audit sau này.
+### Introducing a Service Layer
 
-### 5. Hiển Thị Phiên Bản và Ngày Build
+The original design had the controller directly interacting with the repository and handling all business logic. This approach made the controller tightly coupled with multiple dependencies, which in turn complicated unit testing.
 
-Ứng dụng hiện tại cho phép người dùng xem phiên bản và ngày build của ứng dụng. Thông tin này sẽ được hiển thị trên giao diện import/export và được lấy từ backend qua endpoint `/api/AppInfo/version`.
+**New Design Highlights:**
 
-## Demo Video
+- **Dedicated Student Service:**  
+  A new `StudentService` is implemented to encapsulate all business logic. This service handles:
+  - Validation of unique Student IDs.
+  - Verification of email domain and phone number format using configurable settings.
+  - Enforcement of valid status transitions according to the business rules.
+- **Controller Simplification:**  
+  The controller now only delegates requests to the `StudentService`, which isolates the business logic from the web layer. This separation makes the controller easier to test and maintain.
+- **Mocking Dependencies for Testing:**  
+  With the business logic isolated in the service layer, it becomes much easier to use mocks (e.g., Moq) to simulate dependencies (like repository, configuration, and validators) in unit tests. This improves the overall testability of the application.
 
-Bạn có thể xem clip demo các tính năng mới của Version 2.0 tại đây:  
-[Demo Video Version 2](https://drive.google.com/file/d/1604EpAfp3aGwsyvBmw78_7ICM_SWNWsJ/view?usp=sharing)
+---
 
-## Hình Ảnh Minh Chứng
+## 3. Evaluation and Design Improvements
 
-Trong thư mục `screenshots/` của repository, bạn sẽ tìm thấy các hình ảnh minh chứng cho các tính năng mới như:
+### **Issues Identified in Previous Design:**
 
-- Giao diện xuất dữ liệu JSON và Excel.
-- Giao diện import file Excel.
-- Giao diện tìm kiếm nâng cao theo khoa và tên sinh viên.
-- Hiển thị thông tin phiên bản và ngày build.
+- **Heavy Dependency on Persistent Storage:**  
+  The original design tightly coupled the controller with the database via the repository, making unit testing difficult.  
+  **Improvement:** Use a service layer to encapsulate business logic and rely on mocks/stubs for unit tests.
 
-## Các Yêu Cầu Chưa Hoàn Thành / Chưa Làm Kịp
+- **Overloaded Modules:**  
+  The controller handled too many responsibilities (request handling and business logic).  
+  **Improvement:** Refactor into separate layers (controller for I/O, service for business logic) to follow the Single Responsibility Principle.
 
-- **Một số tính năng giao diện nâng cao**: Chưa có sự tinh chỉnh giao diện cho các màn hình quản lý đối tượng (Khoa, Tình trạng, Chương trình) theo tiêu chuẩn responsive.
-- **Cải thiện chức năng tìm kiếm**: Một số yêu cầu về tính năng tìm kiếm nâng cao vẫn cần được tối ưu.
-- **Báo cáo lỗi và thống kê audit**: Chức năng ghi log đã được tích hợp, tuy nhiên cần bổ sung báo cáo thống kê lỗi trong môi trường production.
+- **Limited Testability of Critical Business Logic:**  
+  Key rules such as unique MSSV, email domain verification, phone format validation, and status transitions were hard to test.  
+  **Improvement:** Isolate these business rules within a dedicated service layer, making it easier to write comprehensive unit tests.
 
-## Cài Đặt & Chạy Ứng Dụng
+### **Reporting and Continuous Improvement:**
 
-1. **Clone repository về máy:**
-   ```bash
-   git clone <repository-url>
-   ```
+- **Documentation:**  
+  This README describes the design changes and testing strategy to help team members understand the rationale behind the new structure.
+- **Test Reports:**  
+  In case of testing challenges, a brief report should be provided detailing the issues encountered and suggestions for further refactoring.
+- **Code Refactoring:**  
+  Any further improvements, such as splitting services into even finer-grained components or introducing additional configuration options, will be documented and discussed with the team.
+
+---
+
+## Summary
+
+- **New Service Layer:**  
+  The introduction of a dedicated `StudentService` decouples business logic from the controller and repository. This makes our codebase easier to test and maintain.
+- **Configurable Business Rules:**  
+  Key validations such as unique MSSV, email domain, phone number format, and student status transitions are now configurable via settings, increasing flexibility.
+- **Improved Testability:**  
+  With business logic isolated in the service layer, unit tests can be written using mocks for all external dependencies, leading to more reliable and maintainable tests.
+
+This design change not only simplifies our application architecture but also significantly enhances our ability to perform thorough unit and integration testing.
