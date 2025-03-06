@@ -5,6 +5,8 @@ using BE.Middlewares;
 using BE.Repository;
 using BE.Services;
 using BE.Utils;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Reflection; // Needed for Assembly
@@ -86,7 +88,7 @@ builder.Services.AddScoped<IStudentStatusTransitionService, StudentStatusTransit
 builder.Services.AddExceptionHandler<GlobalExceptionHandlers>();
 builder.Services.AddScoped<IValidateStudentEmail, ValidateStudentEmail>();
 builder.Services.AddScoped<IValidateStudentPhone, ValidateStudentPhone>();
-
+builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 
 var app = builder.Build();
