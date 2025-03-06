@@ -212,4 +212,50 @@ public async Task<List<StudentDto>> SearchAsync(int? facultyId, string name)
     }).ToList();
 }
 
+    public async Task<List<StudentDto>> GetStudentsByProgramIdAsync(int programId)
+    {
+        var students = await _context.Students
+            .Where(s => s.ProgramId == programId)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
+            .Include(s => s.Status)
+            .ToListAsync();
+    return students.Select(student => new StudentDto
+        {
+            StudentId = student.StudentId,
+            FullName = student.FullName,
+            DateOfBirth = student.DateOfBirth,
+            Gender = student.Gender,
+            Faculty = new facultyDto(student.Faculty.FacultyId, student.Faculty.Name),
+            Course = student.Course,
+            Program = new applicationProgramDto(student.Program.ProgramId, student.Program.Name),
+            Address = student.Address,
+            Email = student.Email,
+            PhoneNumber = student.PhoneNumber,
+            Status = new studentStatusDto(student.Status.StatusId, student.Status.Name)
+        }).ToList();
+    }
+
+    public async Task<List<StudentDto>> GetStudentsByStatusIdAsync(int statusId)
+    {
+        var students = await _context.Students
+            .Where(s => s.StatusId == statusId)
+            .Include(s => s.Faculty)
+            .Include(s => s.Program)
+            .Include(s => s.Status).ToListAsync();
+                return students.Select(student => new StudentDto
+        {
+            StudentId = student.StudentId,
+            FullName = student.FullName,
+            DateOfBirth = student.DateOfBirth,
+            Gender = student.Gender,
+            Faculty = new facultyDto(student.Faculty.FacultyId, student.Faculty.Name),
+            Course = student.Course,
+            Program = new applicationProgramDto(student.Program.ProgramId, student.Program.Name),
+            Address = student.Address,
+            Email = student.Email,
+            PhoneNumber = student.PhoneNumber,
+            Status = new studentStatusDto(student.Status.StatusId, student.Status.Name)
+        }).ToList();
+    }
 }

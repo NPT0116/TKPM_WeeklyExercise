@@ -35,6 +35,7 @@ const ProgramSection: React.FC<ProgramSectionProps> = ({
           onAddNew={onCloseForm}
           onEdit={onEditProgram}
           onDelete={onDeleteProgram}
+          error={error}
         />
       ) : (
         <ProgramForm

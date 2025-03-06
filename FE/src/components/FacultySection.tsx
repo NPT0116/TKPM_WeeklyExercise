@@ -35,6 +35,7 @@ const FacultySection: React.FC<FacultySectionProps> = ({
           onAddNew={onCloseForm}
           onEdit={onEditFaculty}
           onDelete={onDeleteFaculty}
+          error={error}
         />
       ) : (
         <FacultyForm

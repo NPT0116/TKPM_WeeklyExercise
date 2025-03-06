@@ -14,6 +14,7 @@ import FacultySection from "./components/FacultySection";
 import StudentStatusSection from "./components/StudentStatusSection";
 import ProgramSection from "./components/ProgramSection";
 import ErrorPopup from "./components/ErrorPopup";
+import hcmusLogo from "./assets/hcmus-logo-tkpm.png";
 import "./App.css";
 
 function App() {
@@ -152,8 +153,12 @@ function App() {
 
   const handleDeleteFaculty = async (facultyId: number) => {
     try {
-      await api.deleteFaculty(facultyId);
-      setFaculties(faculties.filter((f) => f.facultyId !== facultyId));
+      var response = await api.deleteFaculty(facultyId);
+      if (response.succeeded) {
+        setFaculties(faculties.filter((f) => f.facultyId !== facultyId));
+      } else {
+        setError(response.message || response.errors);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete faculty");
     }
@@ -190,8 +195,12 @@ function App() {
 
   const handleDeleteStatus = async (statusId: number) => {
     try {
-      await api.deleteStudentStatus(statusId);
-      setStatuses(statuses.filter((s) => s.statusId !== statusId));
+      var response = await api.deleteStudentStatus(statusId);
+      if (response.succeeded) {
+        setStatuses(statuses.filter((s) => s.statusId !== statusId));
+      } else {
+        setError(response.message || response.errors);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete status");
     }
@@ -228,8 +237,12 @@ function App() {
 
   const handleDeleteProgram = async (programId: number) => {
     try {
-      await api.deleteProgram(programId);
-      setPrograms(programs.filter((p) => p.programId !== programId));
+      var response = await api.deleteProgram(programId);
+      if (response.succeeded) {
+        setPrograms(programs.filter((p) => p.programId !== programId));
+      } else {
+        setError(response.message || response.errors);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete program");
     }
@@ -240,7 +253,7 @@ function App() {
     setError(null);
   };
 
-  // Handler for student search by MSSV
+  // Handler for student search by MSSV and other criteria
   const handleStudentSearch = async (params: {
     mssv?: string;
     facultyId?: number | null;
@@ -248,7 +261,7 @@ function App() {
   }) => {
     try {
       if (params.mssv && params.mssv.trim()) {
-        // Search by MSSV (existing behavior)
+        // Search by MSSV
         const response = await api.getStudentById(params.mssv);
         setStudents(response.data ? [response.data] : []);
       } else if (
@@ -267,7 +280,7 @@ function App() {
         const response = await api.getStudentsByFacultyId(params.facultyId);
         setStudents(response.data || []);
       } else if (params.name && params.name.trim()) {
-        // Search by student name only (without faculty)
+        // Search by student name only
         const response = await api.searchStudents(null, params.name);
         setStudents(response.data || []);
       } else {
@@ -280,15 +293,22 @@ function App() {
       setError(err instanceof Error ? err.message : "Search failed");
     }
   };
-  if (isLoading) return <div>Loading...</div>;
-  // In App.tsx
+
+  // Handler for import success (e.g., re-fetch students after import)
   const handleImportSuccess = async () => {
     const studentsData = await api.getStudents();
     setStudents(studentsData.data || []);
   };
 
+  if (isLoading) return <div>Loading...</div>;
+
   return (
     <div className="app">
+      {/* Logo in the top corner */}
+      <header className="app-header">
+        <img src={hcmusLogo} alt="HCMUS Logo" className="app-logo" />
+      </header>
+
       {/* Error Popup */}
       {error && (
         <ErrorPopup message={error as string} onClose={closeErrorPopup} />
@@ -306,7 +326,7 @@ function App() {
       {/* Render the appropriate section based on the current tab */}
       {currentTab === "students" && (
         <StudentSection
-          onAddStudent={handleAddStudent} // remains for when form is submitted
+          onAddStudent={handleAddStudent}
           students={students}
           faculties={faculties}
           statuses={statuses}

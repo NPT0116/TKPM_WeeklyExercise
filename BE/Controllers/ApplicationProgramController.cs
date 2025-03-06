@@ -1,3 +1,4 @@
+using BE.Exceptions.ApplicationProgram;
 using BE.Interface;
 using BE.Models;
 using BE.Repository;
@@ -11,12 +12,13 @@ namespace BE.Controllers
     public class ApplicationProgramController : ControllerBase
     {
         private readonly IApplicationProgramRepository _repository;
+        private readonly IStudentRepository _studentRepository;
 
-        public ApplicationProgramController(IApplicationProgramRepository repository)
+        public ApplicationProgramController(IApplicationProgramRepository repository, IStudentRepository studentRepository)
         {
             _repository = repository;
+            _studentRepository = studentRepository;
         }
-
         [HttpGet]
         public async Task<ActionResult<Response<IEnumerable<ApplicationProgram>>>> GetAll()
         {
@@ -53,6 +55,9 @@ namespace BE.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            var students = await _studentRepository.GetStudentsByProgramIdAsync(id);
+            if (students.Any())
+                throw new ProgramCantDelete(id);
             await _repository.DeleteAsync(id);
             return NoContent();
         }

@@ -7,6 +7,8 @@ interface FacultyListScreenProps {
   onAddNew: () => void;
   onEdit: (faculty: Faculty) => void;
   onDelete: (facultyId: number) => void;
+  // Added error prop to display any error message (can be string or React node)
+  error?: string | React.ReactNode;
 }
 
 const FacultyListScreen: React.FC<FacultyListScreenProps> = ({
@@ -14,10 +16,13 @@ const FacultyListScreen: React.FC<FacultyListScreenProps> = ({
   onAddNew,
   onEdit,
   onDelete,
+  error,
 }) => {
   return (
-    <div>
+    <div className="faculty-list-screen">
       <h2>Quản lý Khoa</h2>
+      {/* Display error message if available */}
+      {error && <div className="error-message">{error}</div>}
       <button onClick={onAddNew}>Thêm Khoa mới</button>
       <table>
         <thead>

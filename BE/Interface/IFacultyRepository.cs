@@ -10,4 +10,5 @@ namespace BE.Interface;
         Task<Faculty> CreateAsync(Faculty faculty);
         Task UpdateAsync(Faculty faculty);
         Task DeleteAsync(int id);
+
     }

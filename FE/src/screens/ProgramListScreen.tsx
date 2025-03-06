@@ -7,6 +7,7 @@ interface ProgramListScreenProps {
   onAddNew: () => void;
   onEdit: (prog: program) => void;
   onDelete: (programId: number) => void;
+  error?: string | React.ReactNode;
 }
 
 const ProgramListScreen: React.FC<ProgramListScreenProps> = ({
@@ -14,10 +15,12 @@ const ProgramListScreen: React.FC<ProgramListScreenProps> = ({
   onAddNew,
   onEdit,
   onDelete,
+  error,
 }) => {
   return (
-    <div>
+    <div className="program-list-screen">
       <h2>Quản lý Chương trình đào tạo</h2>
+      {error && <div className="error-message">{error}</div>}
       <button onClick={onAddNew}>Thêm Chương trình mới</button>
       <table>
         <thead>

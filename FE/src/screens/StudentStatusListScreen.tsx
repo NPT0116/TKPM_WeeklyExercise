@@ -7,6 +7,7 @@ interface StudentStatusListScreenProps {
   onAddNew: () => void;
   onEdit: (status: StudentStatus) => void;
   onDelete: (statusId: number) => void;
+  error?: string | React.ReactNode;
 }
 
 const StudentStatusListScreen: React.FC<StudentStatusListScreenProps> = ({
@@ -14,10 +15,12 @@ const StudentStatusListScreen: React.FC<StudentStatusListScreenProps> = ({
   onAddNew,
   onEdit,
   onDelete,
+  error,
 }) => {
   return (
-    <div>
+    <div className="student-status-list-screen">
       <h2>Quản lý Tình trạng sinh viên</h2>
+      {error && <div className="error-message">{error}</div>}
       <button onClick={onAddNew}>Thêm Tình trạng mới</button>
       <table>
         <thead>

@@ -35,6 +35,7 @@ const StudentStatusSection: React.FC<StudentStatusSectionProps> = ({
           onAddNew={onCloseForm}
           onEdit={onEditStatus}
           onDelete={onDeleteStatus}
+          error={error}
         />
       ) : (
         <StudentStatusForm

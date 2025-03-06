@@ -1,3 +1,4 @@
+using BE.Exceptions.Faculty;
 using BE.Interface;
 using BE.Models;
 using BE.Repository;
@@ -11,10 +12,12 @@ namespace BE.Controllers
     public class FacultyController : ControllerBase
     {
         private readonly IFacultyRepository _repository;
+        private readonly IStudentRepository _studentRepository;
 
-        public FacultyController(IFacultyRepository repository)
+        public FacultyController(IFacultyRepository repository, IStudentRepository studentRepository)
         {
             _repository = repository;
+            _studentRepository = studentRepository;
         }
 
         [HttpGet]
@@ -53,6 +56,9 @@ namespace BE.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            var students = await _studentRepository.GetStudentsByFacultyIdAsync(id);
+            if (students.Any())
+                throw new FacultyCantDelete(id);
             await _repository.DeleteAsync(id);
             return NoContent();
         }
