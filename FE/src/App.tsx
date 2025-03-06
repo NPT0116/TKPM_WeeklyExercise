@@ -8,73 +8,44 @@ import {
   program,
 } from "./interface";
 import { api, ApiResponse } from "./api";
-import StudentListScreen from "./screens/StudentListScreen";
-import StudentForm from "./components/StudentForm";
-import FacultyListScreen from "./screens/FacultyListScreen";
-import FacultyForm from "./components/FacultyForm";
-import StudentStatusListScreen from "./screens/StudentStatusListScreen";
-import StudentStatusForm from "./components/StudentStatusForm";
-import ProgramListScreen from "./screens/ProgramListScreen";
-import ProgramForm from "./components/ProgramForm";
+import NavigationBar, { Tab } from "./components/NavigationBar";
+import StudentSection from "./components/StudentSection";
+import FacultySection from "./components/FacultySection";
+import StudentStatusSection from "./components/StudentStatusSection";
+import ProgramSection from "./components/ProgramSection";
+import ErrorPopup from "./components/ErrorPopup";
 import "./App.css";
-import StudentSearchPanel from "./components/StudentSearchPanel";
-import ImportExportPanel from "./components/ImportExportPanel";
-type Tab = "students" | "faculties" | "statuses" | "programs";
 
 function App() {
-  // --- State cho Sinh viên ---
+  // --- State for Students ---
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  // --- State cho Khoa ---
+  // --- State for Faculties ---
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
 
-  // --- State cho Tình trạng sinh viên ---
+  // --- State for Student Statuses ---
   const [statuses, setStatuses] = useState<StudentStatus[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<StudentStatus | null>(
     null
   );
 
-  // --- State cho Chương trình ---
+  // --- State for Programs ---
   const [programs, setPrograms] = useState<program[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<program | null>(null);
 
-  // --- Các state chung ---
+  // --- General state ---
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<React.ReactNode | null>(null);
+  const [error, setError] = useState<string | React.ReactNode | null>(null);
   const [currentTab, setCurrentTab] = useState<Tab>("students");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (currentTab === "students") {
-          const studentsData = await api.getStudents();
-          setStudents(studentsData.data || []);
-        } else if (currentTab === "faculties") {
-          const facultiesData = await api.getFaculties();
-          setFaculties(facultiesData.data || []);
-        } else if (currentTab === "statuses") {
-          const statusesData = await api.getStudentStatuses();
-          setStatuses(statusesData.data || []);
-        } else if (currentTab === "programs") {
-          const programsData = await api.getPrograms();
-          setPrograms(programsData.data || []);
-        }
-      } catch (err) {
-        console.error("Error loading data:", err);
-        setError(err instanceof Error ? err.message : "An error occurred");
-      }
-    };
 
-    fetchData();
-  }, [currentTab]);
-
+  // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setIsLoading(true);
-        // Tải dữ liệu cho tất cả các màn hình cùng lúc
         const [facultiesData, statusesData, studentsData, programsData] =
           await Promise.all([
             api.getFaculties(),
@@ -97,7 +68,7 @@ function App() {
     loadInitialData();
   }, []);
 
-  // --- Handlers cho Sinh viên ---
+  // --- Handlers for Students ---
   const handleAddStudent = async (
     student: StudentRequest
   ): Promise<ApiResponse<Student>> => {
@@ -117,10 +88,10 @@ function App() {
   };
 
   const handleUpdateStudent = async (
-    updatedStudent: StudentRequest
+    student: StudentRequest
   ): Promise<ApiResponse<Student>> => {
     try {
-      const response = await api.updateStudent(updatedStudent);
+      const response = await api.updateStudent(student);
       if (response.succeeded) {
         const studentsData = await api.getStudents();
         setStudents(studentsData.data || []);
@@ -136,14 +107,21 @@ function App() {
 
   const handleDeleteStudent = async (studentId: string) => {
     try {
-      await api.deleteStudent(studentId);
-      setStudents(students.filter((s) => s.studentId !== studentId));
+      const response = await api.deleteStudent(studentId);
+      if (response.succeeded) {
+        const studentsData = await api.getStudents();
+        setStudents(studentsData.data || []);
+        setIsFormOpen(false);
+        setSelectedStudent(null);
+      } else {
+        setError(response.message || response.errors);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete student");
     }
   };
 
-  // --- Handlers cho Khoa ---
+  // --- Handlers for Faculties ---
   const handleAddFaculty = async (faculty: Faculty) => {
     try {
       const response = await api.addFaculty(faculty);
@@ -181,7 +159,7 @@ function App() {
     }
   };
 
-  // --- Handlers cho Tình trạng sinh viên ---
+  // --- Handlers for Student Statuses ---
   const handleAddStatus = async (status: StudentStatus) => {
     try {
       const response = await api.addStudentStatus(status);
@@ -219,7 +197,7 @@ function App() {
     }
   };
 
-  // --- Handlers cho Chương trình ---
+  // --- Handlers for Programs ---
   const handleAddProgram = async (prog: program) => {
     try {
       const response = await api.addProgram(prog);
@@ -257,9 +235,12 @@ function App() {
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // Handler for closing the error modal
+  const closeErrorPopup = () => {
+    setError(null);
+  };
 
+  // Handler for student search by MSSV
   const handleStudentSearch = async (params: {
     mssv?: string;
     facultyId?: number | null;
@@ -299,185 +280,112 @@ function App() {
       setError(err instanceof Error ? err.message : "Search failed");
     }
   };
-
   if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  // In App.tsx
+  const handleImportSuccess = async () => {
+    const studentsData = await api.getStudents();
+    setStudents(studentsData.data || []);
+  };
 
   return (
     <div className="app">
-      {/* Navigation */}
-      <nav>
-        <button
-          onClick={() => {
-            setCurrentTab("students");
-            setIsFormOpen(false);
-          }}
-        >
-          Sinh viên
-        </button>
-        <button
-          onClick={() => {
-            setCurrentTab("faculties");
-            setIsFormOpen(false);
-          }}
-        >
-          Khoa
-        </button>
-        <button
-          onClick={() => {
-            setCurrentTab("statuses");
-            setIsFormOpen(false);
-          }}
-        >
-          Tình trạng
-        </button>
-        <button
-          onClick={() => {
-            setCurrentTab("programs");
-            setIsFormOpen(false);
-          }}
-        >
-          Chương trình
-        </button>
-      </nav>
-
-      {/* Student Screens */}
-      {currentTab === "students" && !isFormOpen && (
-        <>
-          <StudentSearchPanel
-            faculties={faculties}
-            onSearch={handleStudentSearch}
-          />
-          <StudentListScreen
-            students={students}
-            onAddNew={() => {
-              setSelectedStudent(null);
-              setIsFormOpen(true);
-            }}
-            onEdit={(student) => {
-              setSelectedStudent(student);
-              setIsFormOpen(true);
-            }}
-            onDelete={handleDeleteStudent}
-            onSearch={async (studentId) => {
-              // This prop can be left empty or used for legacy MSSV search if desired
-            }}
-          />
-          <ImportExportPanel />
-        </>
+      {/* Error Popup */}
+      {error && (
+        <ErrorPopup message={error as string} onClose={closeErrorPopup} />
       )}
-      {currentTab === "students" && isFormOpen && (
-        <StudentForm
-          student={selectedStudent}
+
+      {/* Navigation */}
+      <NavigationBar
+        currentTab={currentTab}
+        onChangeTab={(tab) => {
+          setCurrentTab(tab);
+          setIsFormOpen(false);
+        }}
+      />
+
+      {/* Render the appropriate section based on the current tab */}
+      {currentTab === "students" && (
+        <StudentSection
+          onAddStudent={handleAddStudent} // remains for when form is submitted
+          students={students}
           faculties={faculties}
           statuses={statuses}
           programs={programs}
+          selectedStudent={selectedStudent}
+          isFormOpen={isFormOpen}
           error={error}
-          onSubmit={async (student) => {
-            if (selectedStudent) {
-              return await handleUpdateStudent(student);
-            } else {
-              return await handleAddStudent(student);
-            }
-          }}
-          onClose={() => {
+          onUpdateStudent={handleUpdateStudent}
+          onDeleteStudent={handleDeleteStudent}
+          onCloseForm={() => {
             setIsFormOpen(false);
             setSelectedStudent(null);
           }}
-        />
-      )}
-      {/* Màn hình quản lý Khoa */}
-      {currentTab === "faculties" && !isFormOpen && (
-        <FacultyListScreen
-          faculties={faculties}
-          onAddNew={() => {
-            setSelectedFaculty(null);
+          onEditStudent={(student) => {
+            setSelectedStudent(student);
             setIsFormOpen(true);
           }}
-          onEdit={(faculty) => {
+          onImportSuccess={handleImportSuccess}
+          onOpenAddForm={() => {
+            setSelectedStudent(null);
+            setIsFormOpen(true);
+          }}
+          onSearch={handleStudentSearch}
+        />
+      )}
+      {currentTab === "faculties" && (
+        <FacultySection
+          faculties={faculties}
+          selectedFaculty={selectedFaculty}
+          isFormOpen={isFormOpen}
+          error={error}
+          onAddFaculty={handleAddFaculty}
+          onUpdateFaculty={handleUpdateFaculty}
+          onDeleteFaculty={handleDeleteFaculty}
+          onCloseForm={() => {
+            setIsFormOpen(false);
+            setSelectedFaculty(null);
+          }}
+          onEditFaculty={(faculty) => {
             setSelectedFaculty(faculty);
             setIsFormOpen(true);
           }}
-          onDelete={handleDeleteFaculty}
         />
       )}
-      {currentTab === "faculties" && isFormOpen && (
-        <FacultyForm
-          faculty={selectedFaculty}
-          onSubmit={(faculty) => {
-            if (selectedFaculty) {
-              handleUpdateFaculty(faculty);
-            } else {
-              handleAddFaculty(faculty);
-            }
-          }}
-          onClose={() => {
-            setIsFormOpen(false);
-            setSelectedFaculty(null);
-          }}
-        />
-      )}
-
-      {/* Màn hình quản lý Tình trạng sinh viên */}
-      {currentTab === "statuses" && !isFormOpen && (
-        <StudentStatusListScreen
+      {currentTab === "statuses" && (
+        <StudentStatusSection
           statuses={statuses}
-          onAddNew={() => {
+          selectedStatus={selectedStatus}
+          isFormOpen={isFormOpen}
+          error={error}
+          onAddStatus={handleAddStatus}
+          onUpdateStatus={handleUpdateStatus}
+          onDeleteStatus={handleDeleteStatus}
+          onCloseForm={() => {
+            setIsFormOpen(false);
             setSelectedStatus(null);
-            setIsFormOpen(true);
           }}
-          onEdit={(status) => {
+          onEditStatus={(status) => {
             setSelectedStatus(status);
             setIsFormOpen(true);
           }}
-          onDelete={handleDeleteStatus}
         />
       )}
-      {currentTab === "statuses" && isFormOpen && (
-        <StudentStatusForm
-          status={selectedStatus}
-          onSubmit={(status) => {
-            if (selectedStatus) {
-              handleUpdateStatus(status);
-            } else {
-              handleAddStatus(status);
-            }
-          }}
-          onClose={() => {
-            setIsFormOpen(false);
-            setSelectedStatus(null);
-          }}
-        />
-      )}
-
-      {/* Màn hình quản lý Chương trình */}
-      {currentTab === "programs" && !isFormOpen && (
-        <ProgramListScreen
+      {currentTab === "programs" && (
+        <ProgramSection
           programs={programs}
-          onAddNew={() => {
+          selectedProgram={selectedProgram}
+          isFormOpen={isFormOpen}
+          error={error}
+          onAddProgram={handleAddProgram}
+          onUpdateProgram={handleUpdateProgram}
+          onDeleteProgram={handleDeleteProgram}
+          onCloseForm={() => {
+            setIsFormOpen(false);
             setSelectedProgram(null);
-            setIsFormOpen(true);
           }}
-          onEdit={(prog) => {
+          onEditProgram={(prog) => {
             setSelectedProgram(prog);
             setIsFormOpen(true);
-          }}
-          onDelete={handleDeleteProgram}
-        />
-      )}
-      {currentTab === "programs" && isFormOpen && (
-        <ProgramForm
-          program={selectedProgram}
-          onSubmit={(prog) => {
-            if (selectedProgram) {
-              handleUpdateProgram(prog);
-            } else {
-              handleAddProgram(prog);
-            }
-          }}
-          onClose={() => {
-            setIsFormOpen(false);
-            setSelectedProgram(null);
           }}
         />
       )}

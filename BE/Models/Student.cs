@@ -50,4 +50,6 @@ namespace BE.Models;
         public int StatusId { get; set; }
         [ForeignKey("StatusId")]
         public StudentStatus Status { get; set; }
+        [Required]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

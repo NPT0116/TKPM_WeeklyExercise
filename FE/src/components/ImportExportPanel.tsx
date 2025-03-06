@@ -6,7 +6,13 @@ interface AppInfo {
   buildDate: string;
 }
 
-const ImportExportPanel: React.FC = () => {
+interface ImportExportPanelProps {
+  onImportSuccess: () => void;
+}
+
+const ImportExportPanel: React.FC<ImportExportPanelProps> = ({
+  onImportSuccess,
+}) => {
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [uploadMessage, setUploadMessage] = useState<string>("");
@@ -95,6 +101,7 @@ const ImportExportPanel: React.FC = () => {
       );
       if (response.ok) {
         setUploadMessage("Import thành công!");
+        onImportSuccess();
       } else {
         setUploadMessage("Import thất bại.");
       }

@@ -1,4 +1,5 @@
 using System;
+using BE.Config;
 using BE.Dto;
 using BE.Exceptions.ApplicationProgram;
 using BE.Exceptions.Faculty;
@@ -6,6 +7,7 @@ using BE.Exceptions.Student;
 using BE.Exceptions.StudentStatus;
 using BE.Interface;
 using BE.Models;
+using Microsoft.Extensions.Options;
 
 namespace BE.Services;
 
@@ -18,7 +20,8 @@ public class StudentService : IStudentService
     private readonly IApplicationProgramRepository _applicationProgramRepository;
     private readonly IStudentStatusRepository _studentStatusRepository;
     private readonly IStudentStatusTransitionService _studentStatusTransitionService;
-    public StudentService(IStudentRepository studentRepository, IValidateStudentEmail validateStudentEmail, IValidateStudentPhone validateStudentPhone, IFacultyRepository facultyRepository, IApplicationProgramRepository applicationProgramRepository, IStudentStatusRepository studentStatusRepository, IStudentStatusTransitionService studentStatusTransitionService)
+    private readonly StudentDeletionSetting _studentDeletionSetting;
+    public StudentService(IOptions<StudentDeletionSetting> options,IStudentRepository studentRepository, IValidateStudentEmail validateStudentEmail, IValidateStudentPhone validateStudentPhone, IFacultyRepository facultyRepository, IApplicationProgramRepository applicationProgramRepository, IStudentStatusRepository studentStatusRepository, IStudentStatusTransitionService studentStatusTransitionService)
     {
         _studentRepository = studentRepository;
         _validateStudentEmail = validateStudentEmail;
@@ -27,6 +30,7 @@ public class StudentService : IStudentService
         _applicationProgramRepository = applicationProgramRepository;
         _studentStatusRepository = studentStatusRepository;
         _studentStatusTransitionService = studentStatusTransitionService;
+        _studentDeletionSetting = options.Value;
     }
     public async Task<StudentCreateDto> AddStudentServiceAsync(StudentCreateDto student)
     {
@@ -56,6 +60,21 @@ public class StudentService : IStudentService
 
         await _studentRepository.CreateAsync(student);
         return student;
+    }
+
+    public async Task DeleteStudentServiceAsync(string id)
+    {
+        StudentDto existingStudent =  await _studentRepository.GetByIdAsync(id);
+        if (existingStudent == null)
+        {
+            throw new StudentNotFound(id);
+        }
+        var deletionTime = DateTime.Now.AddMinutes(-_studentDeletionSetting.AllowedDeletionMinutes);
+        if (existingStudent.CreatedAt < deletionTime)
+        {
+            throw new StudentCantDeleteException($"Student can't be deleted after {_studentDeletionSetting.AllowedDeletionMinutes} minutes");
+        }
+        await _studentRepository.DeleteAsync(id);
     }
 
     public async Task<StudentUpdateDto> UpdateStudentServiceAsync(StudentUpdateDto student)
@@ -97,4 +116,5 @@ public class StudentService : IStudentService
         await _studentRepository.UpdateAsync(student);
         return student;
     }
+    
 }

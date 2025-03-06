@@ -46,4 +46,5 @@ public class StudentDto
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public studentStatusDto Status { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

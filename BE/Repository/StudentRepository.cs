@@ -48,7 +48,8 @@ public class StudentRepository : IStudentRepository
                 (
                     student.Status.StatusId,
                     student.Status.Name
-                )
+                ),
+                CreatedAt = student.CreatedAt,
             }).ToList();
         }
 
@@ -83,7 +84,8 @@ public class StudentRepository : IStudentRepository
                 (
                     student.Status.StatusId,
                     student.Status.Name
-                )
+                ),
+                CreatedAt = student.CreatedAt.ToLocalTime()
             };
         }
 

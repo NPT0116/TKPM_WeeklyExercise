@@ -81,10 +81,12 @@ builder.Services.AddScoped<IStudentImportService, StudentImportService>();
 builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.Configure<PhoneSetting>(builder.Configuration.GetSection("PhoneSetting"));
 builder.Services.Configure<StudentStatusTransitionConfig>(builder.Configuration.GetSection("StudentStatusTransitionSettings"));
+builder.Services.Configure<StudentDeletionSetting>(builder.Configuration.GetSection("StudentDeletionSettings"));
 builder.Services.AddScoped<IStudentStatusTransitionService, StudentStatusTransitionService>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandlers>();
 builder.Services.AddScoped<IValidateStudentEmail, ValidateStudentEmail>();
 builder.Services.AddScoped<IValidateStudentPhone, ValidateStudentPhone>();
+
 builder.Services.AddScoped<IStudentService, StudentService>();
 
 var app = builder.Build();

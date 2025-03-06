@@ -1,7 +1,7 @@
+// src/screens/StudentListScreen.tsx
 import React from "react";
 import { Student } from "../interface";
 import StudentList from "../components/StudentList";
-import SearchBar from "../components/SearchBar";
 
 interface StudentListScreenProps {
   students: Student[];
@@ -16,7 +16,7 @@ const StudentListScreen: React.FC<StudentListScreenProps> = ({
   onAddNew,
   onDelete,
   onEdit,
-  // onSearch,
+  onSearch,
 }) => {
   return (
     <div className="screen student-list-screen">
@@ -25,6 +25,7 @@ const StudentListScreen: React.FC<StudentListScreenProps> = ({
         <button onClick={onAddNew}>Thêm Sinh Viên Mới</button>
       </header>
 
+      {/* Optionally include a search bar */}
       {/* <SearchBar onSearch={onSearch} /> */}
 
       <StudentList students={students} onDelete={onDelete} onEdit={onEdit} />

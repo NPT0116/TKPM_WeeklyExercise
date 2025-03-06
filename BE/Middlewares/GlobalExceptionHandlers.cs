@@ -1,33 +1,50 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using BE.Exceptions;
+using BE.Utils; // Response<T> class is defined here
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
-namespace BE.Middlewares;
-
-
-public class GlobalExceptionHandlers(ILogger<GlobalExceptionHandlers> logger) : IExceptionHandler
+namespace BE.Middlewares
 {
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    public class GlobalExceptionHandlers(ILogger<GlobalExceptionHandlers> logger) : IExceptionHandler
     {
-        var problemDetails = new ProblemDetails();
-        problemDetails.Instance = httpContext.Request.Path;
-
-         if (exception is BaseException baseException)
+        public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {
-            problemDetails.Title = baseException.Message;
-            httpContext.Response.StatusCode = (int)baseException.StatusCode;
-        }
-        else
-        {
-            problemDetails.Title = "An unexpected error occurred.";
-            httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
-        }
+            Response<object> responseObj;
 
-        logger.LogError("{ProblemDetailsTitle}", problemDetails.Title);
+            if (exception is BaseException baseException)
+            {
+                responseObj = new Response<object>(
+                    data: null,
+                    message: baseException.Message,
+                    success: false)
+                {
+                    Errors = new[] { baseException.Message }
+                };
 
-        problemDetails.Status = httpContext.Response.StatusCode;
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken).ConfigureAwait(false);
-        return true;
+                httpContext.Response.StatusCode = (int)baseException.StatusCode;
+            }
+            else
+            {
+                responseObj = new Response<object>(
+                    data: null,
+                    message: "An unexpected error occurred.",
+                    success: false)
+                {
+                    Errors = new[] { "An unexpected error occurred." }
+                };
+
+                httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            }
+
+            logger.LogError("{Error}", responseObj.Message);
+
+            await httpContext.Response.WriteAsJsonAsync(responseObj, cancellationToken)
+                                 .ConfigureAwait(false);
+            return true;
+        }
     }
 }

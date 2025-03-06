@@ -36,7 +36,8 @@
       "Address": "Bình Chánh",
       "Email": "thanh1612004@student.university.edu.vn",
       "PhoneNumber": "0915361073",
-      "StatusId": 1
+      "StatusId": 1,
+      "CreatedAt": "2022-09-01T00:00:00Z"
     }
   ]
 }

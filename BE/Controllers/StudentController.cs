@@ -105,12 +105,7 @@ namespace BE.Controller
         [HttpDelete("{id}")]
         public async Task<ActionResult<Response<string>>> DeleteStudent(string id)
         {
-            var existingStudent = await _studentRepo.GetByIdAsync(id);
-            if (existingStudent == null)
-            {
-                return NotFound(new Response<string>("Student not found."));
-            }
-            await _studentRepo.DeleteAsync(id);
+            await _studentService.DeleteStudentServiceAsync(id);
             return Ok(new Response<string>(null, "Student deleted successfully.", true));
         }
 
