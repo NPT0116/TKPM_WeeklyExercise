@@ -20,6 +20,7 @@ builder.Services.AddLogging(loggingBuilder =>
 });
 builder.Services.AddProblemDetails();
 builder.Configuration.AddJsonFile("seedData.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("email.json", optional: true, reloadOnChange: true);
 
 // Add services to the container.
 builder.Services.AddOpenApi();
@@ -72,7 +73,11 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
+builder.Services.Configure<BusinessRulesSettings>(
+    builder.Configuration.GetSection("BusinessRules"));
 builder.Services.AddControllers();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddSingleton<IBusinessRulesService, BusinessRulesService>();
 builder.Services.AddHostedService<ApplyMigrationService>();
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
 builder.Services.AddScoped<IApplicationProgramRepository, ApplicationProgramRepository>();
@@ -82,6 +87,7 @@ builder.Services.AddScoped<IStudentExportService, StudentExportService>();
 builder.Services.AddScoped<IStudentImportService, StudentImportService>();
 builder.Services.Configure<EmailSetting>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.Configure<PhoneSetting>(builder.Configuration.GetSection("PhoneSetting"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSenderSettings"));
 builder.Services.Configure<StudentStatusTransitionConfig>(builder.Configuration.GetSection("StudentStatusTransitionSettings"));
 builder.Services.Configure<StudentDeletionSetting>(builder.Configuration.GetSection("StudentDeletionSettings"));
 builder.Services.AddScoped<IStudentStatusTransitionService, StudentStatusTransitionService>();

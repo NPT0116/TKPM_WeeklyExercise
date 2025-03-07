@@ -26,6 +26,7 @@ namespace BE.Middlewares
                 };
 
                 httpContext.Response.StatusCode = (int)baseException.StatusCode;
+                Console.WriteLine("Error: {0}", baseException.Message);
             }
             else
             {

@@ -1,7 +1,13 @@
 // src/components/NavigationBar.tsx
 import React from "react";
 
-export type Tab = "students" | "faculties" | "statuses" | "programs";
+export type Tab =
+  | "students"
+  | "faculties"
+  | "statuses"
+  | "programs"
+  | "certificate"
+  | "business";
 
 interface NavigationBarProps {
   currentTab: Tab;
@@ -37,6 +43,18 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
         onClick={() => onChangeTab("programs")}
       >
         Chương trình
+      </button>
+      <button
+        className={currentTab === "certificate" ? "active" : ""}
+        onClick={() => onChangeTab("certificate")}
+      >
+        Giấy xác nhận
+      </button>
+      <button
+        className={currentTab === "business" ? "active" : ""}
+        onClick={() => onChangeTab("business")}
+      >
+        Điều chỉnh quy định
       </button>
     </nav>
   );

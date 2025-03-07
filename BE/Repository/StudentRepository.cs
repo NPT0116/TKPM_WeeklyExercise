@@ -119,7 +119,10 @@ public async Task UpdateAsync(StudentUpdateDto student)
     {
         throw new StudentNotFound(student.StudentId);
     }
-
+    if (student.Address == null)
+    {
+        student.Address = "";
+    }
     studentEntity.FullName = student.FullName;
     studentEntity.DateOfBirth = student.DateOfBirth.ToUniversalTime();
     studentEntity.Gender = student.Gender;
@@ -130,6 +133,7 @@ public async Task UpdateAsync(StudentUpdateDto student)
     studentEntity.Email = student.Email;
     studentEntity.PhoneNumber = student.PhoneNumber;
     studentEntity.StatusId = student.StatusId;
+    Console.WriteLine(studentEntity.Address);
 
     _context.Students.Update(studentEntity);
     await _context.SaveChangesAsync();

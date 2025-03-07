@@ -20,5 +20,4 @@ namespace BE.Interface;
         /// <summary>
         /// Convert certificate content (HTML/Markdown) into a DOCX document.
         /// </summary>
-        byte[] ConvertToDocx(string certificateContent);
     }

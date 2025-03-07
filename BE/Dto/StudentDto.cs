@@ -12,7 +12,7 @@ public class StudentCreateDto
     public int FacultyId { get; set; }
     public int Course { get; set; }
     public int ProgramId { get; set; }
-    public string Address { get; set; }
+    public string Address { get; set; } = "";
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public int StatusId { get; set; }
@@ -27,7 +27,7 @@ public class StudentUpdateDto
     public int FacultyId { get; set; }
     public int Course { get; set; }
     public int ProgramId { get; set; }
-    public string Address { get; set; }
+    public string Address { get; set; } = "";
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public int StatusId { get; set; }

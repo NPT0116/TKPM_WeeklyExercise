@@ -122,11 +122,5 @@ namespace BE.Services
             return pdfBytes;
         }
 
-        public byte[] ConvertToDocx(string certificateContent)
-        {
-            // For demonstration, this method still returns the HTML content as bytes.
-            // In production, you should implement conversion using a library like Open XML SDK or DocX.
-            return Encoding.UTF8.GetBytes(certificateContent);
-        }
     }
 }

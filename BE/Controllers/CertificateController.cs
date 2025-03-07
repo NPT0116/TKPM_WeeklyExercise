@@ -16,7 +16,7 @@ namespace BE.Controllers
         }
 
         // POST: api/certificate/export
-        [HttpPost("export")]
+       [HttpPost("export")]
         public async Task<IActionResult> ExportCertificate([FromBody] CertificateRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.StudentId) || string.IsNullOrWhiteSpace(request.Purpose))
@@ -24,26 +24,22 @@ namespace BE.Controllers
                 return BadRequest("StudentId and Purpose are required.");
             }
 
-            // Generate certificate content (HTML, Markdown, etc.) using internal template
+            // Generate certificate HTML content.
             var certificateContent = await _certificateService.GenerateCertificateContentAsync(request.StudentId, request.Purpose);
 
+            // Check desired format: pdf or html. Default to html if not specified.
             var format = request.Format?.ToLower() ?? "html";
             if (format == "pdf")
             {
                 byte[] pdfBytes = _certificateService.ConvertToPdf(certificateContent);
                 return File(pdfBytes, "application/pdf", "certificate.pdf");
             }
-            else if (format == "docx")
-            {
-                byte[] docxBytes = _certificateService.ConvertToDocx(certificateContent);
-                return File(docxBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "certificate.docx");
-            }
             else
             {
-                // Default: return HTML content
                 return Content(certificateContent, "text/html");
             }
         }
+
     }
 
     public class CertificateRequest

@@ -13,9 +13,14 @@ import StudentSection from "./components/StudentSection";
 import FacultySection from "./components/FacultySection";
 import StudentStatusSection from "./components/StudentStatusSection";
 import ProgramSection from "./components/ProgramSection";
+import CertificateComponent from "./components/CertificateComponent"; // new certificate component
 import ErrorPopup from "./components/ErrorPopup";
 import hcmusLogo from "./assets/hcmus-logo-tkpm.png";
 import "./App.css";
+import BusinessRuleSettingComponent from "./components/BusinessRuleSettingComponent";
+
+// Extend the Tab type to include certificate.
+type Tab = "students" | "faculties" | "statuses" | "programs" | "certificate";
 
 function App() {
   // --- State for Students ---
@@ -42,7 +47,7 @@ function App() {
   const [currentTab, setCurrentTab] = useState<Tab>("students");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Load initial data
+  // Load initial data for students, faculties, statuses, programs
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -253,7 +258,7 @@ function App() {
     setError(null);
   };
 
-  // Handler for student search by MSSV and other criteria
+  // Handler for student search by criteria
   const handleStudentSearch = async (params: {
     mssv?: string;
     facultyId?: number | null;
@@ -284,7 +289,7 @@ function App() {
         const response = await api.searchStudents(null, params.name);
         setStudents(response.data || []);
       } else {
-        // If no criteria, reload all students
+        // Reload all students if no criteria
         const response = await api.getStudents();
         setStudents(response.data || []);
       }
@@ -409,6 +414,8 @@ function App() {
           }}
         />
       )}
+      {currentTab === "certificate" && <CertificateComponent />}
+      {currentTab === "business" && <BusinessRuleSettingComponent />}
     </div>
   );
 }

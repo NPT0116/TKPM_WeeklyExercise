@@ -12,7 +12,7 @@ BE/*.mdb
 BE/*.log
 BE/.vs/
 BE/.vscode/
-
+BE/email.json
 # .NET
 Test/bin/
 Test/obj/

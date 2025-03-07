@@ -66,7 +66,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
     if (student) {
       setFormData({
         ...student,
-        // Khi chỉnh sửa, sử dụng các thuộc tính liên quan nếu có, hoặc mặc định
+        // Provide fallback for address if it's null or undefined.
+        address: student.address || "",
+        // When editing, ensure you have the proper fields from nested objects,
+        // or default to the first available option.
         statusId: student.status?.id || statuses[0]?.statusId || 1,
         programId: student.program?.id || programs[0]?.programId || 1,
         facultyId: student.faculty?.id || faculties[0]?.facultyId || 1,
@@ -85,6 +88,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // console.log(formData.address);
       const date = new Date(formData.dateOfBirth);
       if (isNaN(date.getTime())) {
         setFormError("Invalid date format");
